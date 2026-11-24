@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Art preview</title>
+<style>body{background:#fdf6e9;font-family:sans-serif} .row{display:flex;flex-wrap:wrap;gap:6px} svg.pet{width:150px;height:150px;background:#fff;border-radius:12px} svg.hands{width:400px} svg.thumb{width:80px;height:80px;background:#fff;border-radius:10px}</style>
+</head><body><div id="out"></div>
+<script type="module">
+import { petSvg } from '/src/art/pets.ts';
+import { handsSvg } from '/src/art/hands.ts';
+import { itemThumb } from '/src/art/items.ts';
+import { ITEMS } from '/src/pet/catalog.ts';
+const out = document.getElementById('out');
+const moods = ['feliz','emocion','abrazo','sueno','despeinado','comiendo','ronroneo'];
+for (const kind of ['gato','perro','conejo','dragon']) {
+  const row = document.createElement('div'); row.className='row';
+  for (const growth of [0,1,2]) row.append(petSvg(kind,{growth,mood:'feliz',equipped:[]}));
+  for (const mood of moods) row.append(petSvg(kind,{growth:1,mood,equipped:[]}));
+  row.append(petSvg(kind,{growth:2,mood:'feliz',equipped:['corona','pajarita','gafas'], bubbles:false}));
+  row.append(petSvg(kind,{growth:0,mood:'feliz',equipped:['gorro-lana','bufanda','gafas-corazon'], bubbles:true}));
+  out.append(row);
+}
+const h = document.createElement('div'); h.className='row';
+h.append(handsSvg(['up','up','up','up','up','up','up','down','down','down'],[6,7,8,9,10,11,12]));
+h.append(handsSvg(['carry','up','up','ghost','ghost','ghost','ghost','down','down','down'],[10,11,12]));
+out.append(h);
+const t = document.createElement('div'); t.className='row';
+for (const it of ITEMS) t.append(itemThumb(it.id));
+out.append(t);
+</script></body></html>

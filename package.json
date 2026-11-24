@@ -1,0 +1,25 @@
+{
+  "name": "mates-mascota",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "audio": "node scripts/gen-audio.mjs",
+    "deploy": "npm run build && gh-pages -d dist --dotfiles -m \"Deploy\""
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "happy-dom": "^21.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vite-plugin-pwa": "^0.21.2",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@fontsource/atkinson-hyperlegible": "^5.3.0"
+  }
+}
