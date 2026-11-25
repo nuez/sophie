@@ -21,35 +21,35 @@ describe('applyOutcome', () => {
   const right: ColumnOutcome = { correct: true, scored: { fingerAdd: 'right' } };
   const wrong: ColumnOutcome = { correct: false, scored: { fingerAdd: 'wrong' } };
 
-  it('first-try sum: coins, care counter, level stats', () => {
+  it('first-try sum: cents, care counter, level stats', () => {
     const s = defaultState();
     s.current = 7; s.unlocked = 7;
     s.skills.fingerAdd.stage = 2;
     const r = applyOutcome(s, prob({}), [right, right]);
     expect(r.firstTry).toBe(true);
-    expect(r.coins).toBe(5);
-    expect(s.coins).toBe(5);
+    expect(r.cents).toBe(50);
+    expect(s.cents).toBe(50);
     expect(s.careCounter).toBe(1);
     expect(s.levels[7]).toEqual({ done: 1, recent: [true] });
     expect(s.skills.fingerAdd.streak).toBe(2);
   });
 
-  it('a wrong column: no coins, no care count, level records false', () => {
+  it('a wrong column: no money, no care count, level records false', () => {
     const s = defaultState();
     s.skills.fingerAdd.stage = 2;
     const r = applyOutcome(s, prob({}), [right, wrong]);
     expect(r.firstTry).toBe(false);
-    expect(s.coins).toBe(0);
+    expect(s.cents).toBe(0);
     expect(s.careCounter).toBe(0);
     expect(s.levels[7].recent).toEqual([false]);
   });
 
-  it('review sums do not touch level stats but still earn coins and care', () => {
+  it('review sums do not touch level stats but still earn money and care', () => {
     const s = defaultState();
     s.skills.fingerAdd.stage = 2;
     applyOutcome(s, prob({ review: true, level: 3 }), [right]);
     expect(s.levels[3]).toBeUndefined();
-    expect(s.coins).toBe(3);
+    expect(s.cents).toBe(30);
     expect(s.careCounter).toBe(1);
   });
 

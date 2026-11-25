@@ -39,7 +39,8 @@ export function createPad(onChange: (v: string) => void, onCheck: (v: string) =>
     glow(digits) {
       for (const [d, k] of Object.entries(keys)) k.classList.toggle('glow', !!digits && digits.includes(d));
     },
-    enable(on) { enabled = on; el.classList.toggle('disabled', !on); update(); },
+    // Only the ✓ state changes: re-sending the value would overwrite the answer just written.
+    enable(on) { enabled = on; el.classList.toggle('disabled', !on); check.toggleAttribute('disabled', !value || !enabled); },
   };
   return pad;
 }

@@ -16,6 +16,7 @@ import { Aborted, Input } from '../play/input';
 import { runColumn, type PlayCtx } from '../play/column';
 import { applyOutcome, type ColumnOutcome } from '../play/scoring';
 import { CONFIG } from '../config';
+import { formatEuros } from '../money/money';
 import type { Screen } from '../app';
 
 let lastProblem: Problem | undefined;
@@ -91,7 +92,7 @@ export const playScreen: Screen = (root, app) => {
     pad.enable(false);
     let result!: ReturnType<typeof applyOutcome>;
     app.update((st) => { result = applyOutcome(st, p, outcomes); });
-    tb.setCoins(s.coins);
+    tb.setMoney(s.cents);
     tb.setPaws(Math.min(s.careCounter, CONFIG.careEvery));
     await celebrate(result);
   }
@@ -101,7 +102,7 @@ export const playScreen: Screen = (root, app) => {
     const box = h('div', { class: 'overlay-card' },
       h('div', { class: 'overlay-pet' }, petSvg(s.pet!.kind, { growth: growth(s.unlocked), mood: 'emocion', equipped: s.pet!.equipped })),
       h('h2', {}, r.unlocked ? '¡Nivel nuevo!' : '¡Lo has conseguido!'),
-      r.coins ? h('div', { class: 'earned' }, '+', String(r.coins), icon('coin', 36)) : null,
+      r.cents ? h('div', { class: 'earned' }, icon('coin', 36), `+${formatEuros(r.cents)}`) : null,
       r.grew ? h('p', { class: 'grew' }, `¡${s.pet!.name} ha crecido!`) : null,
       next,
     );

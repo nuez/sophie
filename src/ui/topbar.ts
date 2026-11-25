@@ -1,5 +1,6 @@
 import { h } from './dom';
 import { icon } from '../art/icons';
+import { formatEuros } from '../money/money';
 import type { App } from '../app';
 
 export interface TopbarOpts {
@@ -10,7 +11,7 @@ export interface TopbarOpts {
 }
 
 export function topbar(app: App, o: TopbarOpts = {}) {
-  const coins = h('span', { class: 'coins' }, icon('coin', 30), h('b', {}, String(app.state.coins)));
+  const coins = h('span', { class: 'coins', 'aria-label': 'Monedero' }, icon('coin', 30), h('b', {}, formatEuros(app.state.cents)));
   const paws = h('div', { class: 'paws', 'aria-label': 'Patitas' });
   const setPaws = (n: number) => {
     paws.replaceChildren(...Array.from({ length: 5 }, (_, i) => {
@@ -30,7 +31,7 @@ export function topbar(app: App, o: TopbarOpts = {}) {
   );
   return {
     el,
-    setCoins(n: number) { coins.querySelector('b')!.textContent = String(n); coins.classList.remove('bump'); void coins.offsetWidth; coins.classList.add('bump'); },
+    setMoney(cents: number) { coins.querySelector('b')!.textContent = formatEuros(cents); coins.classList.remove('bump'); void coins.offsetWidth; coins.classList.add('bump'); },
     setPaws,
   };
 }

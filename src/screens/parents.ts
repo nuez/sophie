@@ -1,4 +1,5 @@
 import { h } from '../ui/dom';
+import { formatEuros } from '../money/money';
 import { topbar } from '../ui/topbar';
 import { LEVELS } from '../math/levels';
 import { MAX_STAGE, SKILLS, type SkillId } from '../progress/skills';
@@ -28,7 +29,7 @@ export const parentsScreen: Screen = (root, app) => {
       ...LEVELS.map((L) => { const o = h('option', { value: L.id }, `${L.id}. ${L.name}`) as HTMLOptionElement; o.selected = L.id === s.current; return o; }));
     const resetBox = h('div', { class: 'reset-box' });
     const askReset = () => resetBox.replaceChildren(
-      h('span', {}, '¿Seguro? Se borra todo: mascota, monedas y progreso.'),
+      h('span', {}, '¿Seguro? Se borra todo: mascota, dinero y progreso.'),
       h('button', { class: 'small danger', onclick: () => { const fresh = defaultState(); app.update((st) => Object.assign(st, fresh)); app.go('choose'); } }, 'Sí, borrar'),
       h('button', { class: 'small', onclick: () => resetBox.replaceChildren(resetBtn) } , 'No'),
     );
@@ -53,9 +54,9 @@ export const parentsScreen: Screen = (root, app) => {
           h('label', { class: 'row' }, 'Al sumar, empezar a contar desde ',
             (() => { const sel = h('select', { onchange: (e: Event) => { app.update((st) => { st.settings.addStart = (e.target as HTMLSelectElement).value as 'larger' | 'top'; }); } },
               h('option', { value: 'larger' }, 'el número más grande'), h('option', { value: 'top' }, 'el número de arriba')) as HTMLSelectElement; sel.value = s.settings.addStart; return sel; })()),
-          h('p', {}, `Monedas: ${s.coins} · Objetos: ${s.owned.length}`),
+          h('p', {}, `Dinero: ${formatEuros(s.cents)} · Objetos: ${s.owned.length}`),
           h('button', { class: 'small', onclick: () => app.go('care', { test: true }) }, 'Probar un momento de mimos'),
-          h('button', { class: 'small', onclick: () => { app.update((st) => { st.coins += 50; }); render(); } }, '+50 monedas'),
+          h('button', { class: 'small', onclick: () => { app.update((st) => { st.cents += 500; }); render(); } }, '+5 €'),
           resetBox,
         ),
       ),

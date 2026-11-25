@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { defaultState } from '../src/state/store';
-import { applyVisit, growth, coinsFor, nextActivity, unlockedActivities } from '../src/pet/petState';
+import { applyVisit, growth, nextActivity, unlockedActivities } from '../src/pet/petState';
 import { ITEMS } from '../src/pet/catalog';
 
 const H = 3600 * 1000;
@@ -30,11 +30,6 @@ describe('applyVisit', () => {
 describe('pet rules', () => {
   it('growth stages at levels 5 and 10', () => {
     expect([1, 4, 5, 9, 10, 14].map(growth)).toEqual([0, 0, 1, 1, 2, 2]);
-  });
-  it('coins grow with the level', () => {
-    expect(coinsFor(1)).toBe(2);
-    expect(coinsFor(4)).toBe(4);
-    expect(coinsFor(14)).toBe(9);
   });
   it('scruffy forces brushing', () => {
     expect(nextActivity({ ...defaultState(), scruffy: true, careRotation: 2 })).toBe('cepillar');

@@ -3,6 +3,10 @@ import { digitsOf } from '../math/columns';
 import type { BorrowMark, ColumnStep, Problem } from '../math/types';
 
 const PLACE_LABEL = ['U', 'D', 'C', 'UM', 'DM'];
+/** Money columns: two of cents, then euros. */
+const MONEY_LABEL = ['c', 'c', '€', '€', '€'];
+/** In money sums the comma sits to the right of this column (the euro units). */
+const EURO_PLACE = 2;
 const PLACE_CLASS = ['u', 'd', 'c', 'um', 'um'];
 
 interface PlaceView {
@@ -41,6 +45,14 @@ export function createBoard(p: Problem, steps: ColumnStep[]): Board {
 
   const n = steps.length;
   const top = digitsOf(p.top), bottom = digitsOf(p.bottom);
+  if (p.money) {
+    // 0,50 − 0,45: the euro column shows its 0 on both rows
+    while (top.length <= EURO_PLACE) top.push(0);
+    while (bottom.length <= EURO_PLACE) bottom.push(0);
+    el.classList.add('money');
+  }
+  const labels = p.money ? MONEY_LABEL : PLACE_LABEL;
+  const comma = (place: number) => (p.money && place === EURO_PLACE ? h('span', { class: 'comma' }, ',') : null);
   el.style.setProperty('--cols', String(n));
   const views: PlaceView[] = [];
   const grid = h('div', { class: 'board-grid' });
@@ -55,11 +67,11 @@ export function createBoard(p: Problem, steps: ColumnStep[]): Board {
   rows.answer.push(opCell('answer'));
   for (let place = n - 1; place >= 0; place--) {
     const pc = `col-${PLACE_CLASS[place]}`;
-    const labelCell = h('div', { class: `cell label ${pc}` }, PLACE_LABEL[place]);
+    const labelCell = h('div', { class: `cell label ${pc}` }, labels[place]);
     const markCell = h('div', { class: `cell mark ${pc}`, onpointerdown: () => tapCb(place, 'carry') });
     const topCell = h('div', { class: `cell top ${pc}`, onpointerdown: () => tapCb(place, 'top') });
-    const bottomCell = h('div', { class: `cell bottom ${pc}` }, bottom[place] !== undefined ? String(bottom[place]) : '');
-    const answerCell = h('div', { class: `cell answer ${pc}` });
+    const bottomCell = h('div', { class: `cell bottom ${pc}` }, bottom[place] !== undefined ? String(bottom[place]) : '', comma(place));
+    const answerCell = h('div', { class: `cell answer ${pc}` }, comma(place));
     rows.label.push(labelCell); rows.mark.push(markCell); rows.top.push(topCell); rows.bottom.push(bottomCell);
     rows.line.push(h('div', { class: `cell line ${pc}` })); rows.answer.push(answerCell);
     views[place] = { orig: top[place] ?? null, crossed: false, above: null, plus10: false, tenCrossed: false, carry: false, topCell, markCell, bottomCell, answerCell, labelCell };
@@ -77,6 +89,8 @@ export function createBoard(p: Problem, steps: ColumnStep[]): Board {
       const d = h('span', { class: `digit ${v.crossed ? 'crossed' : ''}` }, ...(v.tenCrossed ? [h('span', { class: 'ten' }, '1'), String(v.orig)] : [String(v.orig)]));
       if (v.plus10 && !v.crossed) v.topCell.append(h('span', { class: 'ten' }, '1'));
       v.topCell.append(d);
+      const c = comma(place);
+      if (c) v.topCell.append(c);
     }
     v.markCell.replaceChildren();
     if (v.carry) v.markCell.append(h('span', { class: 'carry-one' }, '1'));
@@ -128,6 +142,8 @@ export function createBoard(p: Problem, steps: ColumnStep[]): Board {
       const v = views[place];
       if (!v) return;
       v.answerCell.replaceChildren(h('span', { class: `ans ${kind}` }, text));
+      const c = comma(place);
+      if (c) v.answerCell.append(c);
     },
     pointAt(place) {
       views.forEach((v, i) => v.labelCell.classList.toggle('point', i === place));

@@ -2,7 +2,8 @@ import { LEVELS } from '../math/levels';
 import type { ColumnStep, Problem } from '../math/types';
 import { masteredLevel, newLevelStats, recordSum } from '../progress/levelProgress';
 import { MAX_STAGE, recordResult, recordWatched, type SkillId } from '../progress/skills';
-import { coinsFor, growth } from '../pet/petState';
+import { growth } from '../pet/petState';
+import { earnFor } from '../money/money';
 import type { AppState } from '../state/store';
 
 export type Score = 'watched' | 'right' | 'wrong';
@@ -21,7 +22,7 @@ export function expectedEntry(step: ColumnStep, carryStage: number, single: bool
 
 export interface SumResult {
   firstTry: boolean;
-  coins: number;
+  cents: number;
   unlocked: number | null;
   grew: boolean;
 }
@@ -35,10 +36,10 @@ export function applyOutcome(s: AppState, p: Problem, cols: ColumnOutcome[]): Su
   }
   s.scruffy = false; // spec §10.5: her first sum (or care break) tidies the pet
   const firstTry = cols.every((c) => c.correct);
-  let coins = 0;
+  let cents = 0;
   if (firstTry) {
-    coins = coinsFor(p.level);
-    s.coins += coins;
+    cents = earnFor(p.level);
+    s.cents += cents;
     s.careCounter += 1;
   }
   let unlocked: number | null = null;
@@ -53,5 +54,5 @@ export function applyOutcome(s: AppState, p: Problem, cols: ColumnOutcome[]): Su
       grew = growth(s.unlocked) !== before;
     }
   }
-  return { firstTry, coins, unlocked, grew };
+  return { firstTry, cents, unlocked, grew };
 }

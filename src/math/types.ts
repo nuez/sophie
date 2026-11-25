@@ -9,6 +9,8 @@ export interface Problem {
   single: boolean;
   /** A review sum drawn from an earlier level. */
   review: boolean;
+  /** Amounts in cents, shown as euros: always at least a euro column, comma before the cents. */
+  money?: boolean;
 }
 
 /** One cross-out on the top row: the digit at `place` goes from `before` to `after`. */

@@ -20,8 +20,6 @@ export function applyVisit(s: AppState, now: number): AppState {
 
 export const growth = (unlocked: number): 0 | 1 | 2 => (unlocked >= 10 ? 2 : unlocked >= 5 ? 1 : 0);
 
-export const coinsFor = (level: number) => 2 + Math.floor(level / 2);
-
 export const unlockedActivities = (unlocked: number): ActivityId[] =>
   CARE_ACTIVITIES.filter((a) => a.unlock <= unlocked).map((a) => a.id);
 

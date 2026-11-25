@@ -36,8 +36,12 @@ function solveAdd(p: Problem): ColumnStep[] {
   return steps;
 }
 
+/** Money keeps the euro column (0,35 €), so columns up to here are always written. */
+const MONEY_MIN_COLS = 3;
+
 function solveSub(p: Problem): ColumnStep[] {
   const a = digitsOf(p.top), b = digitsOf(p.bottom);
+  if (p.money) while (a.length < MONEY_MIN_COLS) a.push(0);
   const cur = [...a];
   const steps: ColumnStep[] = [];
   for (let i = 0; i < a.length; i++) {
@@ -62,7 +66,8 @@ function solveSub(p: Problem): ColumnStep[] {
     });
   }
   // Leading zero results are not written (spec §8 review rules).
-  for (let i = steps.length - 1; i > 0 && steps[i].write === 0; i--) steps[i].skip = true;
+  const keep = p.money ? MONEY_MIN_COLS - 1 : 0;
+  for (let i = steps.length - 1; i > keep && steps[i].write === 0; i--) steps[i].skip = true;
   return steps;
 }
 

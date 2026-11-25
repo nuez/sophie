@@ -20,7 +20,8 @@ export interface Settings {
 export interface AppState {
   version: 1;
   pet: PetInfo | null;
-  coins: number;
+  /** Her purse, in cents. */
+  cents: number;
   owned: string[];
   unlocked: number;
   current: number;
@@ -39,7 +40,7 @@ export function defaultState(): AppState {
   return {
     version: 1,
     pet: null,
-    coins: 0,
+    cents: 0,
     owned: [],
     unlocked: 1,
     current: 1,
@@ -65,9 +66,13 @@ export function load(storage: Storage | undefined = browserStorage()): AppState 
     if (!raw) return d;
     const s = JSON.parse(raw);
     if (!s || typeof s !== 'object' || s.version !== 1) return d;
+    // Saves from before euros counted coins; a coin is worth 10 c at the new prices.
+    const { coins, ...rest } = s;
+    const cents = typeof rest.cents === 'number' ? rest.cents : typeof coins === 'number' ? coins * 10 : 0;
     return {
       ...d,
-      ...s,
+      ...rest,
+      cents,
       skills: { ...d.skills, ...(s.skills ?? {}) },
       settings: { ...d.settings, ...(s.settings ?? {}) },
       levels: s.levels ?? {},

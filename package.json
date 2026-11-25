@@ -9,10 +9,9 @@
     "preview": "vite preview --host",
     "test": "vitest run",
     "audio": "node scripts/gen-audio.mjs",
-    "deploy": "npm run build && gh-pages -d dist --dotfiles -m \"Deploy\""
+    "deploy": "sh scripts/deploy.sh"
   },
   "devDependencies": {
-    "gh-pages": "^6.3.0",
     "happy-dom": "^21.0.4",
     "typescript": "^5.9.3",
     "vite": "^5.4.21",

@@ -296,3 +296,19 @@ button[disabled] { opacity: .45; }
 @media (orientation: portrait) { .pad-holder { width: auto; } }
 .splash-pets { display: flex; gap: 10px; }
 .splash-pets svg { width: min(18vw, 150px); height: auto; }
+
+/* money: comma between euros and cents on the board */
+.board.money .cell > span.comma { position: absolute; right: -.14em; bottom: .02em; z-index: 2; color: var(--ink); pointer-events: none; }
+.board.money .cell.answer > span.comma { bottom: .08em; }
+
+/* paying in the shop: she works out the change */
+.change-screen { position: absolute; inset: 0; z-index: 20; background: var(--bg, #fdf6e9); display: flex; flex-direction: column; }
+.change-head { display: flex; align-items: center; gap: 18px; padding: 8px 14px; font-size: 24px; }
+.change-item { display: flex; align-items: center; gap: 10px; }
+.change-item .thumb { width: 64px; height: 64px; }
+.money-tag { background: var(--panel); border-radius: 999px; padding: 4px 14px; box-shadow: var(--shadow); }
+.change-question { margin: 0; text-align: center; font-size: 30px; font-weight: 700; }
+.change-result { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 28px; }
+.change-result p { margin: 0; }
+.shop-note { margin: 4px 4px 8px; font-size: 20px; font-weight: 700; color: var(--accent-dark); min-height: 0; }
+.shop-note:empty { display: none; }
