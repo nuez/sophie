@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatEuros, earnFor, paymentFor, changeProblem } from '../src/money/money';
-import { solve, answer } from '../src/math/columns';
+import { formatEuros, earnFor, canAddCoin, centsMissing, changeCoins } from '../src/money/money';
 import { ITEMS } from '../src/pet/catalog';
 
 describe('formatEuros()', () => {
@@ -20,61 +19,30 @@ describe('earnFor()', () => {
   });
 });
 
-describe('paymentFor()', () => {
-  it('pays with the smallest note or coin that is enough', () => {
-    expect(paymentFor(345, 1000)).toBe(500);
-    expect(paymentFor(65, 1000)).toBe(100);
-    expect(paymentFor(45, 1000)).toBe(50);
-    expect(paymentFor(115, 1000)).toBe(200);
+describe('paying with coins', () => {
+  it('she can add a coin while it is not enough yet and she has the money', () => {
+    expect(canAddCoin(0, 200, 345, 655)).toBe(true);
+    expect(canAddCoin(300, 100, 345, 655)).toBe(true);
+    expect(canAddCoin(400, 50, 345, 655)).toBe(false); // already enough
+    expect(canAddCoin(300, 200, 345, 450)).toBe(false); // she doesn't have that much
   });
 
-  it('without that note, pays with whole euros', () => {
-    expect(paymentFor(345, 420)).toBe(400);
+  it('when no coin fits but she can afford it, she puts in the cents that are missing', () => {
+    expect(centsMissing(300, 345, 347)).toBe(45);
+    expect(centsMissing(300, 345, 655)).toBe(0); // a coin still fits
+    expect(centsMissing(400, 345, 655)).toBe(0); // already enough
   });
 
-  it('pays the exact price when nothing round fits', () => {
-    expect(paymentFor(345, 350)).toBe(345);
-  });
-
-  it('cannot pay without enough money', () => {
-    expect(paymentFor(345, 300)).toBeNull();
-  });
-});
-
-describe('changeProblem()', () => {
-  it('5,00 − 3,45 = 1,55 as a column subtraction', () => {
-    const p = changeProblem(500, 345);
-    expect(p).toMatchObject({ op: '-', top: 500, bottom: 345, money: true, single: false });
-    expect(answer(p)).toBe(155);
-  });
-
-  it('always has a euro column and writes the 0 of 0,35 €', () => {
-    const s = solve(changeProblem(100, 65));
-    expect(s.map((c) => c.write)).toEqual([5, 3, 0]);
-    expect(s.map((c) => c.skip)).toEqual([false, false, false]);
-  });
-
-  it('0,50 − 0,45 gets a euro column even though 50 has two digits', () => {
-    const s = solve(changeProblem(50, 45));
-    expect(s).toHaveLength(3);
-    expect(s.map((c) => c.write)).toEqual([5, 0, 0]);
-    expect(s.some((c) => c.skip)).toBe(false);
-  });
-
-  it('20,00 − 3,45: the leading tens-of-euros zero is skipped', () => {
-    const s = solve(changeProblem(2000, 345));
-    expect(s.map((c) => c.write)).toEqual([5, 5, 6, 1]);
-    const t = solve(changeProblem(1000, 345));
-    expect(t.map((c) => c.write)).toEqual([5, 5, 6, 0]);
-    expect(t.map((c) => c.skip)).toEqual([false, false, false, true]);
+  it('change is shown as real euro coins, biggest first', () => {
+    expect(changeCoins(55)).toEqual([50, 5]);
+    expect(changeCoins(155)).toEqual([100, 50, 5]);
+    expect(changeCoins(388)).toEqual([200, 100, 50, 20, 10, 5, 2, 1]);
+    expect(changeCoins(0)).toEqual([]);
   });
 });
 
 describe('shop prices', () => {
-  it('are in cents and never a round note or coin, so there is always change to work out', () => {
-    for (const it of ITEMS) {
-      expect(it.price).toBeGreaterThan(0);
-      expect(paymentFor(it.price, 100000)).toBeGreaterThan(it.price);
-    }
+  it('are in cents and never round, so there is always change from coins', () => {
+    for (const it of ITEMS) expect(it.price % 50).not.toBe(0);
   });
 });

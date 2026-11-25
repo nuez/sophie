@@ -6,8 +6,6 @@ import { generate } from '../math/generator';
 import { solve } from '../math/columns';
 import { levelById } from '../math/levels';
 import type { Problem } from '../math/types';
-import { effectiveStage, type SkillId } from '../progress/skills';
-import { capFor } from '../progress/levelProgress';
 import { growth } from '../pet/petState';
 import { say, type Clip } from '../audio/speech';
 import { createBoard } from '../play/board';
@@ -61,7 +59,6 @@ export const playScreen: Screen = (root, app) => {
     const p = generate(s.current, { last: lastProblem, unlocked: s.unlocked });
     lastProblem = p;
     const steps = solve(p);
-    const L = levelById(p.level);
     levelTag.replaceChildren(h('span', {}, `Nivel ${s.current}`), h('span', { class: 'lname' }, levelById(s.current).name));
     if (p.review) levelTag.append(h('span', { class: 'review' }, 'repaso'));
 
@@ -72,13 +69,11 @@ export const playScreen: Screen = (root, app) => {
     const pad = createPad((v) => board.writeAnswer(active, v, 'typing'), (v) => input.push({ type: 'check', value: v }), 2);
     padHolder.replaceChildren(pad.el);
 
-    const doneAtLevel = s.levels[p.level]?.done ?? 0;
     const ctx: PlayCtx = {
       p, steps, board, pad, input, helperArea,
       addStart: s.settings.addStart,
       carryPlaced: new Set(),
-      stage: (k: SkillId) => effectiveStage(s.skills[k], capFor(L.id, doneAtLevel, k)),
-      speak,
+      marksShown: new Set(),
       petReact,
     };
     input.flush();

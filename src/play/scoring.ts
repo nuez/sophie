@@ -13,11 +13,10 @@ export interface ColumnOutcome {
   scored: Partial<Record<SkillId, Score>>;
 }
 
-/** What she has to type for a column (spec §15). */
-export function expectedEntry(step: ColumnStep, carryStage: number, single: boolean): number {
-  if (single) return step.total;
-  if (step.carryOut && carryStage === 1) return step.total;
-  return step.write;
+/** What she may type for a column: the digit, or for a carrying column the whole 12 as well. */
+export function acceptedEntries(step: ColumnStep, single: boolean): number[] {
+  if (single) return [step.total];
+  return step.carryOut ? [step.write, step.total] : [step.write];
 }
 
 export interface SumResult {

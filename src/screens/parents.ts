@@ -3,7 +3,7 @@ import { formatEuros } from '../money/money';
 import { CONFIG } from '../config';
 import { topbar } from '../ui/topbar';
 import { LEVELS } from '../math/levels';
-import { MAX_STAGE, SKILLS, type SkillId } from '../progress/skills';
+import { SKILLS, type SkillId } from '../progress/skills';
 import { defaultState } from '../state/store';
 import type { Screen } from '../app';
 
@@ -19,19 +19,12 @@ export const parentsScreen: Screen = (root, app) => {
         h('td', {}, String(L.id)), h('td', {}, L.name), h('td', {}, L.example),
         h('td', {}, String(st?.done ?? 0)), h('td', {}, pct === null ? '—' : `${pct}%`));
     });
-    // Counting is a hint she opens herself (design 2026-11-25): no stages to set, just how she does alone.
-    const counting = (k: SkillId) => k === 'fingerAdd' || k === 'fingerSub';
+    // Everything is a hint she opens herself (design 2026-11-25): no stages to set, just how she does alone.
     const aloneText = (k: SkillId) => {
       const r = s.skills[k].recent;
       return r.length ? `${r.filter(Boolean).length} de las últimas ${r.length} sin pista` : '—';
     };
-    const skillRows = SKILLS.map((k) => h('tr', {},
-      h('td', {}, SKILL_NAMES[k]),
-      h('td', {}, counting(k) ? aloneText(k) : `${s.skills[k].stage} / ${MAX_STAGE[k]}`),
-      counting(k) ? h('td', {}) : h('td', {},
-        h('button', { class: 'small', onclick: () => { app.update((st) => { st.skills[k] = { ...st.skills[k], stage: Math.max(1, st.skills[k].stage - 1), streak: 0, recent: [] }; }); render(); } }, '−'),
-        h('button', { class: 'small', onclick: () => { app.update((st) => { st.skills[k] = { ...st.skills[k], stage: Math.min(MAX_STAGE[k], st.skills[k].stage + 1), streak: 0, recent: [] }; }); render(); } }, '+'),
-      )));
+    const skillRows = SKILLS.map((k) => h('tr', {}, h('td', {}, SKILL_NAMES[k]), h('td', {}, aloneText(k))));
     const levelSelect = h('select', { onchange: (e: Event) => { const v = Number((e.target as HTMLSelectElement).value); app.update((st) => { st.unlocked = Math.max(st.unlocked, v); st.current = v; }); render(); } },
       ...LEVELS.map((L) => { const o = h('option', { value: L.id }, `${L.id}. ${L.name}`) as HTMLOptionElement; o.selected = L.id === s.current; return o; }));
     const resetBox = h('div', { class: 'reset-box' });

@@ -1,20 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { expectedEntry, applyOutcome, type ColumnOutcome } from '../src/play/scoring';
+import { acceptedEntries, applyOutcome, type ColumnOutcome } from '../src/play/scoring';
 import { solve } from '../src/math/columns';
 import { defaultState } from '../src/state/store';
 import type { Problem } from '../src/math/types';
 
 const prob = (o: Partial<Problem>): Problem => ({ op: '+', top: 27, bottom: 15, level: 7, single: false, review: false, ...o });
 
-describe('expectedEntry', () => {
+describe('acceptedEntries', () => {
   const units = solve(prob({}))[0]; // 7 + 5 = 12
-  it('C1 types the column total', () => expect(expectedEntry(units, 1, false)).toBe(12));
-  it('C2/C3 type the units digit', () => {
-    expect(expectedEntry(units, 2, false)).toBe(2);
-    expect(expectedEntry(units, 3, false)).toBe(2);
-  });
-  it('no carry → the digit', () => expect(expectedEntry(solve(prob({ top: 23, bottom: 14 }))[0], 1, false)).toBe(7));
-  it('single mode types the whole answer', () => expect(expectedEntry(solve(prob({ top: 8, bottom: 7, single: true, level: 3 }))[0], 3, true)).toBe(15));
+  it('a carrying column takes the digit or the whole 12', () => expect(acceptedEntries(units, false)).toEqual([2, 12]));
+  it('no carry → the digit only', () => expect(acceptedEntries(solve(prob({ top: 23, bottom: 14 }))[0], false)).toEqual([7]));
+  it('single mode types the whole answer', () => expect(acceptedEntries(solve(prob({ top: 8, bottom: 7, single: true, level: 3 }))[0], true)).toEqual([15]));
 });
 
 describe('applyOutcome', () => {

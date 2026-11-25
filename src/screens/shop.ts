@@ -4,9 +4,9 @@ import { itemThumb } from '../art/items';
 import { topbar } from '../ui/topbar';
 import { ITEMS, equip, type Item } from '../pet/catalog';
 import { say, stopSpeech } from '../audio/speech';
-import { formatEuros, paymentFor } from '../money/money';
+import { formatEuros } from '../money/money';
 import { room } from './room';
-import { changeFlow, type ChangeFlow } from './change';
+import { payFlow } from './pay';
 import type { Screen } from '../app';
 
 export const shopScreen: Screen = (root, app) => {
@@ -14,7 +14,6 @@ export const shopScreen: Screen = (root, app) => {
   const preview = h('div', { class: 'shop-preview' });
   const grid = h('div', { class: 'shop-grid' });
   const note = h('p', { class: 'shop-note' });
-  let flow: ChangeFlow | null = null;
 
   const buy = (it: Item) => {
     app.update((st) => { st.cents -= it.price; st.owned.push(it.id); st.pet!.equipped = equip(st.pet!.equipped, it.id); });
@@ -24,26 +23,17 @@ export const shopScreen: Screen = (root, app) => {
   };
 
   const pay = async (it: Item) => {
-    const paid = paymentFor(it.price, app.state.cents);
-    if (paid === null) {
+    if (app.state.cents < it.price) {
       note.textContent = `Te falta dinero: tienes ${formatEuros(app.state.cents)}. ¡Sigue jugando para ganar más!`;
       say(['faltan_monedas']);
       return;
     }
     note.textContent = '';
-    if (paid === it.price) {
-      // exact money, nothing to give back
-      buy(it);
-      note.textContent = `Pagas ${formatEuros(paid)} justos. ${note.textContent}`;
-      render();
-      return;
-    }
     stopSpeech();
-    flow = changeFlow(app, it, paid);
+    const flow = payFlow(it, app.state.cents);
     root.append(flow.el);
     const ok = await flow.done;
     flow.el.remove();
-    flow = null;
     if (ok) buy(it);
     render();
   };
@@ -74,5 +64,4 @@ export const shopScreen: Screen = (root, app) => {
   render();
   root.append(tb.el, h('div', { class: 'shop-body' }, preview, h('div', { class: 'shop-scroll' }, note, grid)));
   say(['tienda']);
-  return () => flow?.destroy();
 };

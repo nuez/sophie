@@ -1,7 +1,8 @@
-import type { Problem } from '../math/types';
+/** Euro coins, in cents, biggest first. */
+export const EURO_COINS = [200, 100, 50, 20, 10, 5, 2, 1];
 
-/** Euro coins and notes from 5 c up, in cents: what the app can hand the shopkeeper. */
-export const DENOMINATIONS = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+/** The coins she pays with in the shop. */
+export const PAY_COINS = [200, 100, 50];
 
 /** 345 → "3,45 €" (Spanish style: comma, two cents digits, € after). */
 export function formatEuros(cents: number): string {
@@ -13,21 +14,27 @@ export function formatEuros(cents: number): string {
 /** What a first-try sum earns, in cents: 20 c at level 1 up to 90 c at level 14. */
 export const earnFor = (level: number) => 10 * (2 + Math.floor(level / 2));
 
-/**
- * What the app hands over to pay `price` from a purse holding `balance` (all cents):
- * the smallest single note or coin that is enough, else whole euros, else the exact price.
- * Null when she can't afford it.
- */
-export function paymentFor(price: number, balance: number): number | null {
-  if (balance < price) return null;
-  const note = DENOMINATIONS.find((d) => d >= price && d <= balance);
-  if (note !== undefined) return note;
-  const whole = Math.ceil(price / 100) * 100;
-  if (whole <= balance) return whole;
-  return price;
+/** She may put another coin down while it isn't enough yet and her purse has it. */
+export function canAddCoin(given: number, coin: number, price: number, balance: number): boolean {
+  return given < price && given + coin <= balance;
 }
 
-/** The change sum she works out in the shop: paid − price, written with euros and cents. */
-export function changeProblem(paid: number, price: number): Problem {
-  return { op: '-', top: paid, bottom: price, level: 0, single: false, review: false, money: true };
+/**
+ * When it isn't enough yet, no pay coin fits her purse, but she can afford it (3,47 € for 3,45 €):
+ * the cents still missing, which she puts down as small coins. Otherwise 0.
+ */
+export function centsMissing(given: number, price: number, balance: number): number {
+  if (given >= price || balance < price) return 0;
+  if (PAY_COINS.some((c) => canAddCoin(given, c, price, balance))) return 0;
+  return price - given;
+}
+
+/** The change as real coins, biggest first: 55 → [50, 5]. */
+export function changeCoins(cents: number): number[] {
+  const out: number[] = [];
+  let left = cents;
+  for (const c of EURO_COINS) {
+    while (left >= c) { out.push(c); left -= c; }
+  }
+  return out;
 }
