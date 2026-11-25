@@ -107,31 +107,119 @@ describe('runColumn', () => {
     }
   });
 
-  it('C3 + H1: a forgotten carry is shown by the app and not scored as right', async () => {
-    const ctx = makeCtx(add(57, 25), { fingerAdd: 1, carry: 3 });
+  it('C3: Pista on a column with a forgotten carry places it, and it is not scored as right', async () => {
+    const ctx = makeCtx(add(57, 25), { carry: 3 });
     const units = runColumn(ctx, ctx.steps[0]);
     await tick(20);
     check(ctx, '2');
     await units;
     const run = runColumn(ctx, ctx.steps[1]);
-    await new Promise((r) => setTimeout(r, 20));
+    await tick();
+    ctx.input.push({ type: 'help' });
+    await tick(20);
     expect(ctx.carryPlaced.has(1)).toBe(true);
+    expect(ctx.helperArea.querySelector('.ladder-text')!.textContent).toContain('Sube 3 dedos');
     check(ctx, '8');
     const out = await run;
     expect(out.scored.carry).not.toBe('right');
   });
 
-  it('0 + N with no carry is a "se queda igual" column, not a count to zero', async () => {
-    const speak = vi.fn(async () => {});
-    const ctx = makeCtx(add(30, 25), { fingerAdd: 1 }, speak);
+  it('0 + N with no carry: the hint is a "se queda igual" note, not a count to zero', async () => {
+    const ctx = makeCtx(add(30, 25), {});
     const run = runColumn(ctx, ctx.steps[0]);
     await tick();
+    ctx.input.push({ type: 'help' });
+    await tick();
+    expect(ctx.helperArea.textContent).toContain('se queda igual');
+    expect(ctx.helperArea.querySelector('.ladder')).toBeNull();
     check(ctx, '5');
     const out = await run;
-    const said = speak.mock.calls.flat(2);
-    expect(said).not.toContain('iguales');
-    expect(said).toContain('cero_mas');
     expect(out.scored.fingerAdd).toBeUndefined();
+  });
+
+  it('starts clean: only the Pista button, no hands or ladder', async () => {
+    const ctx = makeCtx(sub(9, 4, 2), {});
+    ctx.p.single = true;
+    const run = runColumn(ctx, solve(ctx.p)[0]);
+    await tick();
+    expect(ctx.helperArea.querySelector('.help-btn')!.textContent).toContain('Pista');
+    expect(ctx.helperArea.querySelector('.hands')).toBeNull();
+    ctx.input.destroy();
+    await run.catch(() => {});
+  });
+
+  it('Pista opens the ladder; then a right answer is not scored as done alone', async () => {
+    const ctx = makeCtx(sub(9, 4, 2), {});
+    ctx.p.single = true;
+    const run = runColumn(ctx, solve(ctx.p)[0]);
+    await tick();
+    ctx.input.push({ type: 'help' });
+    await tick();
+    expect(ctx.helperArea.querySelector('.ladder')).not.toBeNull();
+    check(ctx, '5');
+    const out = await run;
+    expect(out.correct).toBe(true);
+    expect(out.scored.fingerSub).toBeUndefined();
+  });
+
+  it('right on the first ✓ without the hint counts as done alone', async () => {
+    const ctx = makeCtx(sub(9, 4, 2), {});
+    ctx.p.single = true;
+    const run = runColumn(ctx, solve(ctx.p)[0]);
+    await tick();
+    check(ctx, '5');
+    expect((await run).scored.fingerSub).toBe('right');
+  });
+
+  it('a wrong answer opens the ladder by itself, and lights no key', async () => {
+    const ctx = makeCtx(sub(9, 4, 2), {});
+    ctx.p.single = true;
+    const glows: (string | null)[] = [];
+    ctx.pad.glow = (d: string | null) => { glows.push(d); };
+    const run = runColumn(ctx, solve(ctx.p)[0]);
+    await tick();
+    check(ctx, '6');
+    await tick();
+    expect(ctx.helperArea.querySelector('.ladder')).not.toBeNull();
+    check(ctx, '5');
+    const out = await run;
+    expect(out.scored.fingerSub).toBe('wrong');
+    expect(out.correct).toBe(false);
+    expect(glows.filter(Boolean)).toEqual([]);
+  });
+
+  it('says in writing what the voice used to say: a wrong answer', async () => {
+    const ctx = makeCtx(sub(9, 4, 2), {});
+    ctx.p.single = true;
+    const run = runColumn(ctx, solve(ctx.p)[0]);
+    await tick();
+    check(ctx, '6');
+    await tick();
+    expect(ctx.helperArea.querySelector('.flow-note')!.textContent).toContain('Casi');
+    check(ctx, '5');
+    await run;
+  });
+
+  it('B2 asks "¿llega?" in writing', async () => {
+    const ctx = makeCtx(sub(32, 5), { borrow: 2 });
+    const run = runColumn(ctx, ctx.steps[0]);
+    await tick();
+    expect(ctx.helperArea.querySelector('.flow-note')!.textContent).toBe('Arriba hay 2 y abajo 5. ¿Llega?');
+    expect(ctx.helperArea.querySelector('.choice-box')).not.toBeNull();
+    ctx.input.destroy();
+    await run.catch(() => {});
+  });
+
+  it('B1 explains the borrow in writing, and the note stays above the hint', async () => {
+    const ctx = makeCtx(sub(32, 5), { borrow: 1 });
+    const run = runColumn(ctx, ctx.steps[0]);
+    await tick(500); // the explanation pauses 400 ms
+    ctx.input.push({ type: 'help' });
+    await tick();
+    expect(ctx.helperArea.querySelector('.flow-note')!.textContent).toContain('Arriba hay 2 y abajo 5. No llega');
+    expect(ctx.helperArea.querySelector('.ladder')).not.toBeNull();
+    check(ctx, '7');
+    await run;
   });
 
   it('stops talking once the sum is left (input destroyed)', async () => {

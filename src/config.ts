@@ -13,4 +13,6 @@ export const CONFIG = {
   newConceptSums: 5,       // ... during the first N sums of that level
   scruffyAfterMs: 24 * 60 * 60 * 1000,
   clipTimeoutMs: 4000,
+  /** Voice is off for now: she reads every instruction. The clips stay in public/audio. */
+  voice: false,
 } as const;

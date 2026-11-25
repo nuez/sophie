@@ -1,5 +1,6 @@
 import { h } from '../ui/dom';
 import { formatEuros } from '../money/money';
+import { CONFIG } from '../config';
 import { topbar } from '../ui/topbar';
 import { LEVELS } from '../math/levels';
 import { MAX_STAGE, SKILLS, type SkillId } from '../progress/skills';
@@ -18,10 +19,16 @@ export const parentsScreen: Screen = (root, app) => {
         h('td', {}, String(L.id)), h('td', {}, L.name), h('td', {}, L.example),
         h('td', {}, String(st?.done ?? 0)), h('td', {}, pct === null ? '—' : `${pct}%`));
     });
+    // Counting is a hint she opens herself (design 2026-11-25): no stages to set, just how she does alone.
+    const counting = (k: SkillId) => k === 'fingerAdd' || k === 'fingerSub';
+    const aloneText = (k: SkillId) => {
+      const r = s.skills[k].recent;
+      return r.length ? `${r.filter(Boolean).length} de las últimas ${r.length} sin pista` : '—';
+    };
     const skillRows = SKILLS.map((k) => h('tr', {},
       h('td', {}, SKILL_NAMES[k]),
-      h('td', {}, `${s.skills[k].stage} / ${MAX_STAGE[k]}`),
-      h('td', {},
+      h('td', {}, counting(k) ? aloneText(k) : `${s.skills[k].stage} / ${MAX_STAGE[k]}`),
+      counting(k) ? h('td', {}) : h('td', {},
         h('button', { class: 'small', onclick: () => { app.update((st) => { st.skills[k] = { ...st.skills[k], stage: Math.max(1, st.skills[k].stage - 1), streak: 0, recent: [] }; }); render(); } }, '−'),
         h('button', { class: 'small', onclick: () => { app.update((st) => { st.skills[k] = { ...st.skills[k], stage: Math.min(MAX_STAGE[k], st.skills[k].stage + 1), streak: 0, recent: [] }; }); render(); } }, '+'),
       )));
@@ -48,9 +55,11 @@ export const parentsScreen: Screen = (root, app) => {
           h('h2', {}, 'Ayudas (1 = la app lo hace, máx = sola)'),
           h('table', {}, h('tbody', {}, ...skillRows)),
           h('h2', {}, 'Ajustes'),
+          ...(CONFIG.voice ? [
           h('label', { class: 'row' }, h('input', { type: 'checkbox', checked: s.settings.voice, onchange: (e: Event) => { app.update((st) => { st.settings.voice = (e.target as HTMLInputElement).checked; }); } }), ' Voz activada'),
           h('label', { class: 'row' }, 'Velocidad de la voz ',
             h('input', { type: 'range', min: 0.7, max: 1.1, step: 0.05, value: s.settings.rate, onchange: (e: Event) => { app.update((st) => { st.settings.rate = Number((e.target as HTMLInputElement).value); }); } })),
+          ] : []),
           h('label', { class: 'row' }, 'Al sumar, empezar a contar desde ',
             (() => { const sel = h('select', { onchange: (e: Event) => { app.update((st) => { st.settings.addStart = (e.target as HTMLSelectElement).value as 'larger' | 'top'; }); } },
               h('option', { value: 'larger' }, 'el número más grande'), h('option', { value: 'top' }, 'el número de arriba')) as HTMLSelectElement; sel.value = s.settings.addStart; return sel; })()),

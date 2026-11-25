@@ -19,6 +19,7 @@ export const shopScreen: Screen = (root, app) => {
   const buy = (it: Item) => {
     app.update((st) => { st.cents -= it.price; st.owned.push(it.id); st.pet!.equipped = equip(st.pet!.equipped, it.id); });
     tb.setMoney(app.state.cents);
+    note.textContent = `¡Comprado! Te quedan ${formatEuros(app.state.cents)}.`;
     say(['comprado']);
   };
 
@@ -32,8 +33,8 @@ export const shopScreen: Screen = (root, app) => {
     note.textContent = '';
     if (paid === it.price) {
       // exact money, nothing to give back
-      note.textContent = `Pagas ${formatEuros(paid)} justos.`;
       buy(it);
+      note.textContent = `Pagas ${formatEuros(paid)} justos. ${note.textContent}`;
       render();
       return;
     }

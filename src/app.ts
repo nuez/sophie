@@ -1,6 +1,10 @@
 import { clear } from './ui/dom';
-import { save, type AppState } from './state/store';
+import { save, type AppState, type Settings } from './state/store';
+import { CONFIG } from './config';
 import { setVoiceSettings, stopSpeech } from './audio/speech';
+
+/** The saved voice setting, unless the voice is switched off for the whole game. */
+export const voiceSettings = (s: Settings) => ({ voice: CONFIG.voice && s.voice, rate: s.rate });
 
 export type ScreenId = 'home' | 'choose' | 'play' | 'care' | 'shop' | 'map' | 'parents';
 export type Screen = (root: HTMLElement, app: App, params?: any) => (() => void) | void;
@@ -17,7 +21,7 @@ export function createApp(root: HTMLElement, state: AppState, screens: Record<Sc
     state,
     update(fn) {
       fn(app.state);
-      setVoiceSettings(app.state.settings);
+      setVoiceSettings(voiceSettings(app.state.settings));
       save(app.state);
     },
     go(screen, params) {
@@ -30,6 +34,6 @@ export function createApp(root: HTMLElement, state: AppState, screens: Record<Sc
       cleanup = screens[screen](holder, app, params);
     },
   };
-  setVoiceSettings(state.settings);
+  setVoiceSettings(voiceSettings(state.settings));
   return app;
 }

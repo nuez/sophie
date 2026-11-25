@@ -28,7 +28,7 @@ export const playScreen: Screen = (root, app) => {
   let lastClips: Clip[] = [];
   const speak = (clips: Clip[]) => { lastClips = clips; return say(clips); };
 
-  const tb = topbar(app, { home: true, onRepeat: () => say(lastClips), paws: s.careCounter });
+  const tb = topbar(app, { home: true, onRepeat: CONFIG.voice ? () => say(lastClips) : undefined, paws: s.careCounter });
   const levelTag = h('div', { class: 'level-tag' });
   const boardHolder = h('div', { class: 'board-holder' });
   const helperArea = h('div', { class: 'helper-area' });

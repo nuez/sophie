@@ -312,3 +312,30 @@ button[disabled] { opacity: .45; }
 .change-result p { margin: 0; }
 .shop-note { margin: 4px 4px 8px; font-size: 20px; font-weight: 700; color: var(--accent-dark); min-height: 0; }
 .shop-note:empty { display: none; }
+
+/* counting ladder: the hint (design 2026-11-25) */
+.help-btn { gap: 8px; }
+.ladder { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.ladder-text { font-size: 24px; font-weight: 700; text-align: center; }
+.ladder-rungs { display: flex; gap: 4px; align-items: stretch; max-width: 100%; overflow-x: auto; padding: 18px 10px 6px; }
+.rung, .rung-head { display: flex; flex-direction: column; gap: 4px; position: relative; }
+.rung-head { justify-content: space-around; font-size: 15px; color: var(--ink-soft); padding-right: 4px; text-align: right; }
+.rung-head span { height: 44px; display: flex; align-items: center; justify-content: flex-end; }
+.rung-num, .rung-count { min-width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; padding: 0 4px; }
+.rung-num { background: #fff; border: 3px solid #eadfd3; }
+.rung-count { background: #fff3e6; border: 3px solid #f3dcc4; color: var(--accent-dark); }
+.rung.empty .rung-num, .rung.empty .rung-count { border-style: dashed; }
+.rung.lit .rung-num { border-color: #f2c94c; background: #fff3c4; }
+.rung.now .rung-num, .rung.now .rung-count { animation: pop .35s; box-shadow: 0 0 0 3px var(--accent); }
+.rung.goal .rung-num { border-color: var(--carry); }
+.rung.carry .rung-count { color: var(--carry); border-color: var(--carry); }
+.rung-flag { position: absolute; top: -14px; right: -6px; }
+.answer-mark { outline: 4px solid var(--good); outline-offset: 2px; background: #eaf7e4 !important; }
+.ladder-row { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; min-height: 0; }
+.ladder-row .hands-box { width: auto; }
+.ladder-row .hands-box svg { height: min(16vh, 150px); width: auto; }
+.ladder-next { font-size: 40px; padding: 10px 30px; }
+.ladder-result { font-size: 26px; min-height: 1.2em; text-align: center; }
+
+/* written in place of the voice */
+.flow-note { font-size: 24px; font-weight: 700; text-align: center; color: var(--ink); background: #fff3c4; border-radius: 14px; padding: 6px 16px; margin-bottom: 6px; }
