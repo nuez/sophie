@@ -3,7 +3,7 @@ import type { ColumnStep, Problem } from '../math/types';
 import { displayMarks } from '../math/columns';
 import { countPlan } from '../math/counting';
 import type { SkillId } from '../progress/skills';
-import { createLadder } from './ladder';
+import { createFingerHint } from './fingerHint';
 import { acceptedEntries, type ColumnOutcome } from './scoring';
 import type { Board } from './board';
 import type { Pad } from './pad';
@@ -26,7 +26,7 @@ export interface PlayCtx {
 
 /**
  * One column (design 2026-11-25, rev. 2). She fills it in herself: nothing is crossed out
- * and no carry is written for her. 💡 Pista 1 is the counting ladder; Pista 2 writes the
+ * and no carry is written for her. 💡 Pista 1 is the counting hands; Pista 2 writes the
  * crossing out or the carried 1. A wrong answer opens the next hint by itself.
  */
 export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnOutcome> {
@@ -88,7 +88,7 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
       hintBox.replaceChildren(h('div', { class: 'helper-text big' }, txt));
       return;
     }
-    hintBox.replaceChildren(createLadder(countPlan(step, p.op, ctx.addStart)).el);
+    hintBox.replaceChildren(createFingerHint(countPlan(step, p.op, ctx.addStart)).el);
   };
 
   const hint2 = async () => {

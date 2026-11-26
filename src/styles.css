@@ -301,29 +301,37 @@ button[disabled] { opacity: .45; }
 .shop-note { margin: 4px 4px 8px; font-size: 20px; font-weight: 700; color: var(--accent-dark); min-height: 0; }
 .shop-note:empty { display: none; }
 
-/* counting ladder: the hint (design 2026-11-25) */
+/* counting hands: the hint (design 2026-11-25, revision 3) */
 .help-btn { gap: 8px; }
-.ladder { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
-.ladder-text { font-size: 24px; font-weight: 700; text-align: center; }
-.ladder-rungs { display: flex; gap: 4px; align-items: stretch; max-width: 100%; overflow-x: auto; padding: 18px 10px 6px; }
-.rung, .rung-head { display: flex; flex-direction: column; gap: 4px; position: relative; }
-.rung-head { justify-content: space-around; font-size: 15px; color: var(--ink-soft); padding-right: 4px; text-align: right; }
-.rung-head span { height: 44px; display: flex; align-items: center; justify-content: flex-end; }
-.rung-num, .rung-count { min-width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; padding: 0 4px; }
-.rung-num { background: #fff; border: 3px solid #eadfd3; }
-.rung-count { background: #fff3e6; border: 3px solid #f3dcc4; color: var(--accent-dark); }
-.rung.empty .rung-num, .rung.empty .rung-count { border-style: dashed; }
-.rung.lit .rung-num { border-color: #f2c94c; background: #fff3c4; }
-.rung.now .rung-num, .rung.now .rung-count { animation: pop .35s; box-shadow: 0 0 0 3px var(--accent); }
-.rung.goal .rung-num { border-color: var(--carry); }
-.rung.carry .rung-count { color: var(--carry); border-color: var(--carry); }
-.rung-flag { position: absolute; top: -14px; right: -6px; }
-.answer-mark { outline: 4px solid var(--good); outline-offset: 2px; background: #eaf7e4 !important; }
-.ladder-row { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; min-height: 0; }
-.ladder-row .hands-box { width: auto; }
-.ladder-row .hands-box svg { height: min(16vh, 150px); width: auto; }
-.ladder-next { font-size: 40px; padding: 10px 30px; }
-.ladder-result { font-size: 26px; min-height: 1.2em; text-align: center; }
+.finger-hint { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }
+.finger-text { font-size: 24px; font-weight: 700; text-align: center; }
+.hands-pairs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; max-width: 100%; pointer-events: none; }
+.finger-hint { --hands-h: min(30vh, 250px); }
+.hands-pairs svg { height: var(--hands-h); width: auto; max-width: 100%; display: block; }
+.hands-pairs.two-pairs svg { height: calc(var(--hands-h) * var(--two-k, .72)); }
+.finger .body { transform-box: fill-box; transform-origin: 50% 100%; transition: transform .45s cubic-bezier(.3, 1.5, .6, 1); }
+.finger.f-down .body { transform: scaleY(.3); }
+.finger.thumb.f-down .body { transform: rotate(-62deg) scaleY(.72); }
+.finger.f-down path:first-child { fill: #ecb690; }
+.finger .nail, .finger .crease { transition: opacity .3s; }
+.finger.f-down .nail, .finger.f-down .crease { opacity: 0; }
+.finger.f-new .nail { fill: var(--accent); stroke: var(--accent-dark); }
+.finger.f-carry .nail { fill: var(--carry); stroke: #b23d5c; }
+.flabel { opacity: 0; transition: opacity .3s; }
+.flabel.on { opacity: 1; }
+.flabel circle { fill: #fff; stroke: #d8cbbd; stroke-width: 2; }
+.flabel text { font-size: 18px; font-weight: 700; fill: var(--ink-soft); }
+.flabel.two text { font-size: 15px; letter-spacing: -.5px; }
+.flabel.l-new circle { fill: #ffe9d6; stroke: var(--accent-dark); }
+.flabel.l-new text { fill: var(--ink); }
+.flabel.l-carry circle { fill: #fde0e8; stroke: var(--carry); }
+.flabel.l-carry text { fill: var(--carry); }
+.flabel.on.l-new, .flabel.on.l-carry { animation: pop .4s; transform-box: fill-box; transform-origin: center; }
+.flabel.answer circle { stroke: var(--good); stroke-width: 4; fill: #eaf7e4; }
+.finger-end { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; min-height: 1.3em; }
+.finger-result { font-size: 26px; text-align: center; }
+.finger-again { font-size: 20px; padding: 8px 18px; }
+@media (prefers-reduced-motion: reduce) { .finger .body, .flabel { transition: none; } .flabel.on { animation: none; } }
 
 /* written in place of the voice */
 .flow-note { font-size: 24px; font-weight: 700; text-align: center; color: var(--ink); background: #fff3c4; border-radius: 14px; padding: 6px 16px; margin-bottom: 6px; }
@@ -371,17 +379,14 @@ button[disabled] { opacity: .45; }
 
 /* compact hint on tablets, landscape or upright */
 @media (orientation: landscape) and (max-height: 760px), (orientation: portrait) and (max-width: 820px) {
-  .flow-note, .ladder-text { font-size: 19px; }
+  .flow-note, .finger-text { font-size: 19px; }
   .flow-note { padding: 4px 12px; }
   .help-btn { font-size: 20px; padding: 8px 16px; }
-  .ladder { gap: 4px; }
-  .ladder-rungs { padding: 14px 6px 4px; gap: 3px; }
-  .rung, .rung-head { gap: 3px; }
-  .rung-num, .rung-count { min-width: 34px; height: 34px; font-size: 19px; border-width: 2px; border-radius: 9px; }
-  .rung-head span { height: 34px; font-size: 13px; }
-  .ladder-row .hands-box svg { height: min(13vh, 100px); }
-  .ladder-next { font-size: 28px; padding: 4px 20px; }
-  .ladder-result { font-size: 20px; }
+  .finger-hint { gap: 3px; }
+  .finger-hint { --hands-h: min(46vh, 250px); --two-k: .66; }
+  .hands-pairs.two-pairs { flex-direction: column; align-items: center; }
+  .finger-result { font-size: 20px; }
+  .finger-again { font-size: 17px; padding: 5px 14px; }
   .helper-text.big { font-size: 22px; }
 }
 
@@ -390,5 +395,6 @@ button[disabled] { opacity: .45; }
   .pad-key { height: clamp(48px, 6.5vh, 66px); font-size: 32px; }
   .pet-corner { width: clamp(80px, 11vh, 120px); }
   .helper-area { overflow-y: auto; }
-  .ladder-row .hands-box svg { height: min(8vh, 76px); }
+  .finger-hint { --hands-h: min(24vh, 230px); --two-k: .8; }
+  .hands-pairs.two-pairs { flex-direction: row; }
 }

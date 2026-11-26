@@ -1,77 +1,104 @@
 import { svgEl } from '../ui/dom';
 
-export type FingerState = 'down' | 'ghost' | 'ghostCarry' | 'up' | 'carry';
+/** down = folded; up = already up at the start; new = raised while counting; carry = the carried 1. */
+export type FingerState = 'down' | 'up' | 'new' | 'carry';
 
-const SKIN = '#f6c9a8', SKIN_DARK = '#e2a57f', CARRY = '#e0567a';
+const SKIN = '#f6c9a8', LINE = '#d39470', NAIL = '#fde7da', SLEEVE = '#8fb8de', SLEEVE_DARK = '#6d97c0';
 
-// Local finger geometry for one hand, thumb on the right (towards the centre). k: 0 = pinky … 4 = thumb.
-const F = [
-  { x: 26, w: 15, h: 40, base: 62 },
-  { x: 43, w: 16, h: 52, base: 58 },
-  { x: 61, w: 16, h: 58, base: 57 },
-  { x: 79, w: 16, h: 52, base: 58 },
+/** Pair width; the two thumbs point at each other with room for their numbers. */
+export const PAIR_W = 330;
+const PAIR_H = 232;
+const TOP = 32; // room above the fingers for the numbers
+const OX = 6;
+
+// One left hand seen from the back, fingers up, thumb on the right (towards the other hand).
+// k: 0 pinky, 1 ring, 2 middle, 3 index. bx/by = base, len, widths at base and tip, tilt in degrees.
+const FINGERS = [
+  { bx: 29, by: 86, len: 50, wb: 20, wt: 17, rot: -13 },
+  { bx: 52, by: 80, len: 64, wb: 22, wt: 19, rot: -3 },
+  { bx: 75, by: 78, len: 70, wb: 23, wt: 20, rot: 1 },
+  { bx: 98, by: 80, len: 63, wb: 22, wt: 19, rot: 6 },
 ];
+const THUMB = { bx: 108, by: 132, len: 54, wb: 26, wt: 21, rot: 35 };
 
-/**
- * Two hands. Finger i: 0–4 left hand pinky→thumb, 5–9 right hand thumb→pinky,
- * so counting runs left to right across the screen like the number track.
- */
-export function handsSvg(states: FingerState[], labels: (number | null)[] = []): SVGSVGElement {
-  const svg = svgEl('svg', { viewBox: '0 -24 300 168', class: 'hands' });
-  svg.append(hand(0, states, labels, 'translate(5 0)'));
-  svg.append(hand(1, states, labels, 'translate(295 0) scale(-1 1)'));
-  return svg;
+/** A tapered finger pointing up from (bx, by), with its nail and knuckle lines. */
+function fingerShape(f: { bx: number; by: number; len: number; wb: number; wt: number }) {
+  const { bx, by, len, wb, wt } = f;
+  const r = wt / 2, tip = by - len, base = by + 10;
+  const d = `M ${bx - wb / 2} ${base} L ${bx - r} ${tip + r} A ${r} ${r} 0 0 1 ${bx + r} ${tip + r} L ${bx + wb / 2} ${base} Z`;
+  return [
+    svgEl('path', { d, fill: SKIN, stroke: LINE, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }),
+    svgEl('rect', { class: 'nail', x: bx - wt * 0.32, y: tip + 3, width: wt * 0.64, height: wt * 0.8, rx: wt * 0.3, fill: NAIL, stroke: LINE, 'stroke-width': 1.2 }),
+    svgEl('path', { class: 'crease', d: `M ${bx - wt * 0.28} ${tip + len * 0.42} q ${wt * 0.28} 3 ${wt * 0.56} 0 M ${bx - wt * 0.3} ${tip + len * 0.68} q ${wt * 0.3} 3 ${wt * 0.6} 0`, fill: 'none', stroke: LINE, 'stroke-width': 1.2, 'stroke-linecap': 'round', opacity: 0.7 }),
+  ];
 }
 
-function hand(side: 0 | 1, states: FingerState[], labels: (number | null)[], transform: string) {
-  const g = svgEl('g', { transform });
-  const idx = (k: number) => (side === 0 ? k : 9 - k);
-  for (let k = 0; k < 4; k++) g.append(finger(idx(k), F[k], states[idx(k)] ?? 'down', labels[idx(k)], side));
-  // palm
-  g.append(svgEl('rect', { x: 22, y: 60, width: 78, height: 74, rx: 28, fill: SKIN, stroke: SKIN_DARK, 'stroke-width': 2 }));
-  // thumb
-  const i = idx(4), st0 = states[i] ?? 'down';
-  const st = st0 === 'ghostCarry' ? 'ghost' : st0;
-  const ghostStroke = st0 === 'ghostCarry' ? CARRY : '#c98f6a';
-  const tg = svgEl('g', { class: `finger f-${st}`, 'data-finger': i });
-  const up = st === 'up' || st === 'carry';
-  const open = up || st === 'ghost';
-  // up: tilted outwards towards the centre; down: folded across the palm
-  const tf = open ? 'rotate(32 96 116)' : 'rotate(-62 96 116)';
-  const fill = st === 'carry' ? CARRY : up ? SKIN : st === 'ghost' ? 'rgba(255,255,255,.6)' : SKIN_DARK;
-  tg.append(svgEl('rect', {
-    x: 87.5, y: open ? 66 : 92, width: 17, height: open ? 50 : 26, rx: 8.5, transform: tf, fill,
-    stroke: st === 'ghost' ? ghostStroke : SKIN_DARK, 'stroke-width': 2.5, 'stroke-dasharray': st === 'ghost' ? '5 4' : null,
-  }));
-  tg.append(svgEl('rect', { x: 100, y: 40, width: 46, height: 90, fill: 'transparent' }));
-  if (labels[i] != null && up) tg.append(label(labels[i]!, 124, 58, side));
-  g.append(tg);
-  return g;
+/** Where a fingertip ends up in the hand's own coordinates, after its tilt. */
+function tipOf(f: { bx: number; by: number; len: number; wt: number; rot: number }) {
+  const a = (f.rot * Math.PI) / 180, l = f.len - 2;
+  return { x: f.bx + Math.sin(a) * l, y: f.by - Math.cos(a) * l };
 }
 
-function finger(i: number, f: (typeof F)[number], st0: FingerState, lab: number | null | undefined, side: 0 | 1) {
-  const g = svgEl('g', { class: `finger f-${st0}`, 'data-finger': i });
-  const st = st0 === 'ghostCarry' ? 'ghost' : st0;
-  const ghostStroke = st0 === 'ghostCarry' ? CARRY : '#c98f6a';
-  const up = st === 'up' || st === 'carry';
-  const h = up || st === 'ghost' ? f.h : 16;
-  const y = f.base + 8 - h;
-  g.append(svgEl('rect', {
-    x: f.x, y, width: f.w, height: h + 8, rx: f.w / 2,
-    fill: st === 'carry' ? CARRY : up ? SKIN : st === 'ghost' ? 'rgba(255,255,255,.6)' : SKIN_DARK,
-    stroke: st === 'ghost' ? ghostStroke : SKIN_DARK, 'stroke-width': 2.5, 'stroke-dasharray': st === 'ghost' ? '5 4' : null,
-  }));
-  if (up) g.append(svgEl('rect', { x: f.x + 3, y: y + 3, width: f.w - 6, height: 8, rx: 4, fill: '#fde6d6' }));
-  // generous invisible hit area
-  g.append(svgEl('rect', { x: f.x - 2, y: 0, width: f.w + 4, height: f.base + 10, fill: 'transparent' }));
-  if (lab != null && up) g.append(label(lab, f.x + f.w / 2, y - 6, side));
-  return g;
+export interface HandPair {
+  svg: SVGSVGElement;
+  /** i: 0–9, left pinky → left thumb, right thumb → right pinky, so counting runs left to right. */
+  set(i: number, state: FingerState, label: number | null, answer?: boolean): void;
 }
 
-function label(n: number, x: number, y: number, side: 0 | 1) {
-  // counter the mirror transform on the right hand so digits read correctly
-  return svgEl('text', {
-    x: side === 1 ? -x : x, y, transform: side === 1 ? 'scale(-1 1)' : null,
-    'text-anchor': 'middle', 'font-size': 15, 'font-weight': 700, fill: '#3a3533',
-  }, String(n));
+/** Two human hands whose fingers rise and fold (CSS transitions). Only a picture: nothing to tap. */
+export function handPair(): HandPair {
+  const svg = svgEl('svg', { viewBox: `0 0 ${PAIR_W} ${PAIR_H}`, class: 'hands', 'aria-hidden': 'true' });
+  const fingers: SVGGElement[] = [];
+  const labels: SVGGElement[] = [];
+
+  for (const side of [0, 1] as const) {
+    const g = svgEl('g', { transform: side === 0 ? `translate(${OX} ${TOP})` : `translate(${PAIR_W - OX} ${TOP}) scale(-1 1)` });
+    const idx = (k: number) => (side === 0 ? k : 9 - k);
+    const toPair = (p: { x: number; y: number }) => ({ x: side === 0 ? OX + p.x : PAIR_W - OX - p.x, y: TOP + p.y });
+
+    // fingers behind the palm, so their bases tuck in
+    FINGERS.forEach((f, k) => {
+      const outer = svgEl('g', { transform: `rotate(${f.rot} ${f.bx} ${f.by})` });
+      const body = svgEl('g', { class: `finger f-down`, 'data-finger': idx(k) }, svgEl('g', { class: 'body' }, ...fingerShape(f)));
+      outer.append(body);
+      g.append(outer);
+      fingers[idx(k)] = body;
+      labels[idx(k)] = labelAt(toPair(tipOf(f)));
+    });
+    // palm, knuckles and sleeve
+    g.append(svgEl('path', {
+      d: 'M 18 98 C 16 86 22 80 32 80 L 104 76 C 115 76 119 84 118 98 L 117 136 C 115 156 106 166 98 172 L 42 172 C 28 164 18 150 18 130 Z',
+      fill: SKIN, stroke: LINE, 'stroke-width': 2.2, 'stroke-linejoin': 'round',
+    }));
+    g.append(svgEl('path', { d: 'M 40 96 q 4 -3 8 0 M 63 92 q 4 -3 8 0 M 86 92 q 4 -3 8 0', fill: 'none', stroke: LINE, 'stroke-width': 1.3, 'stroke-linecap': 'round', opacity: 0.6 }));
+    g.append(svgEl('rect', { x: 34, y: 166, width: 72, height: 30, rx: 7, fill: SLEEVE, stroke: SLEEVE_DARK, 'stroke-width': 2 }));
+    // thumb in front of the palm: up it points at the other hand, folded it lies across the palm
+    const outer = svgEl('g', { transform: `rotate(${THUMB.rot} ${THUMB.bx} ${THUMB.by})` });
+    const thumb = svgEl('g', { class: 'finger thumb f-down', 'data-finger': idx(4) }, svgEl('g', { class: 'body' }, ...fingerShape(THUMB)));
+    outer.append(thumb);
+    g.append(outer);
+    fingers[idx(4)] = thumb;
+    labels[idx(4)] = labelAt(toPair(tipOf(THUMB)));
+
+    svg.append(g);
+  }
+  labels.forEach((l) => svg.append(l));
+
+  return {
+    svg,
+    set(i, state, label, answer = false) {
+      fingers[i].setAttribute('class', `finger ${i === 4 || i === 5 ? 'thumb ' : ''}f-${state}`);
+      const l = labels[i];
+      l.setAttribute('class', `flabel ${label != null && state !== 'down' ? 'on' : ''} l-${state} ${answer ? 'answer' : ''} ${label != null && label >= 10 ? 'two' : ''}`);
+      l.querySelector('text')!.textContent = label == null ? '' : String(label);
+    },
+  };
+}
+
+function labelAt(p: { x: number; y: number }) {
+  const y = p.y - 17;
+  return svgEl('g', { class: 'flabel' },
+    svgEl('circle', { cx: p.x, cy: y, r: 14.5 }),
+    svgEl('text', { x: p.x, y: y + 1, 'text-anchor': 'middle', 'dominant-baseline': 'middle' }, ''),
+  );
 }

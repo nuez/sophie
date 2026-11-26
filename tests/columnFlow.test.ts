@@ -74,7 +74,7 @@ describe('runColumn', () => {
     await tick();
     help(ctx);
     await tick();
-    expect(ctx.helperArea.querySelector('.ladder-text')!.textContent).toContain('Empieza en el 5');
+    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Empieza con 5 dedos');
     expect(note(ctx)).toContain('el 2 se convierte en 12');
     expect(ctx.board.marks).toEqual([]);
     expect(btn(ctx).textContent).toContain('Otra pista');
@@ -94,7 +94,7 @@ describe('runColumn', () => {
     check(ctx, '3');
     await tick();
     expect(note(ctx)).toContain('Casi');
-    expect(ctx.helperArea.querySelector('.ladder')).not.toBeNull();
+    expect(ctx.helperArea.querySelector('.finger-hint')).not.toBeNull();
     check(ctx, '4');
     await tick();
     expect(ctx.board.marks.length).toBeGreaterThan(0);
@@ -167,7 +167,7 @@ describe('runColumn', () => {
     await run;
   });
 
-  it('receiving column: the ladder counts the carry; Pista 2 writes it above', async () => {
+  it('receiving column: the hands count the carry; Pista 2 writes it above', async () => {
     const ctx = makeCtx(add(27, 15));
     const units = runColumn(ctx, ctx.steps[0]);
     await tick();
@@ -177,7 +177,7 @@ describe('runColumn', () => {
     await tick();
     help(ctx);
     await tick();
-    expect(ctx.helperArea.querySelector('.ladder-text')!.textContent).toContain('Sube 2 dedos');
+    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Sube 2 más');
     help(ctx);
     await tick();
     expect(ctx.board.carries).toEqual([1]);
@@ -206,7 +206,7 @@ describe('runColumn', () => {
     help(ctx);
     await tick();
     expect(ctx.helperArea.textContent).toContain('se queda igual');
-    expect(ctx.helperArea.querySelector('.ladder')).toBeNull();
+    expect(ctx.helperArea.querySelector('.finger-hint')).toBeNull();
     check(ctx, '5');
     expect((await run).scored.fingerAdd).toBeUndefined();
   });
@@ -217,7 +217,7 @@ describe('runColumn', () => {
     await tick();
     help(ctx);
     await tick();
-    expect(ctx.helperArea.querySelector('.ladder')).not.toBeNull();
+    expect(ctx.helperArea.querySelector('.finger-hint')).not.toBeNull();
     expect(btn(ctx).hidden).toBe(true);
     check(ctx, '5');
     expect((await run).scored.fingerSub).toBeUndefined();
