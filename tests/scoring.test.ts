@@ -66,6 +66,26 @@ describe('applyOutcome', () => {
     expect(s.current).toBe(5);
   });
 
+  it('after skipping ahead to level 7, passing it moves her on to 8', () => {
+    const s = defaultState();
+    s.unlocked = 2; s.current = 7;
+    s.levels[7] = { done: 9, recent: Array(9).fill(true) };
+    const r = applyOutcome(s, prob({ level: 7, op: '+', top: 47, bottom: 25 }), [{ correct: true, scored: {} }, { correct: true, scored: {} }]);
+    expect(r.unlocked).toBe(8);
+    expect(s.unlocked).toBe(8);
+    expect(s.current).toBe(8);
+  });
+
+  it('passing a level below the one she has reached changes nothing', () => {
+    const s = defaultState();
+    s.unlocked = 6; s.current = 3;
+    s.levels[3] = { done: 9, recent: Array(9).fill(true) };
+    const r = applyOutcome(s, prob({ level: 3, op: '+', top: 7, bottom: 5, single: true }), [{ correct: true, scored: {} }]);
+    expect(r.unlocked).toBeNull();
+    expect(s.unlocked).toBe(6);
+    expect(s.current).toBe(3);
+  });
+
   it('does not unlock past level 14', () => {
     const s = defaultState();
     s.unlocked = 14; s.current = 14;

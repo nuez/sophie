@@ -45,9 +45,10 @@ export function applyOutcome(s: AppState, p: Problem, cols: ColumnOutcome[]): Su
   let grew = false;
   if (!p.review) {
     s.levels[p.level] = recordSum(s.levels[p.level] ?? newLevelStats(), firstTry);
-    if (p.level === s.unlocked && s.unlocked < LEVELS.length && masteredLevel(s.levels[p.level])) {
+    // every level is open on the map; passing the one she reached, or one further on, moves her on
+    if (p.level >= s.unlocked && p.level < LEVELS.length && masteredLevel(s.levels[p.level])) {
       const before = growth(s.unlocked);
-      s.unlocked += 1;
+      s.unlocked = p.level + 1;
       s.current = s.unlocked;
       unlocked = s.unlocked;
       grew = growth(s.unlocked) !== before;

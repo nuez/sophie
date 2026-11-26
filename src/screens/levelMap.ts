@@ -10,19 +10,19 @@ export const levelMapScreen: Screen = (root, app) => {
   const s = app.state;
   const path = h('div', { class: 'map-path' });
   LEVELS.forEach((L, i) => {
-    const locked = L.id > s.unlocked;
+    // all levels are open: she can jump ahead to a harder one whenever she wants
+    const ahead = L.id > s.unlocked;
     const done = masteredLevel(s.levels[L.id]);
     const b = h('button', {
-      class: `map-node ${locked ? 'locked' : ''} ${L.id === s.current ? 'current' : ''} ${i % 2 ? 'low' : 'high'}`,
+      class: `map-node ${ahead ? 'ahead' : ''} ${L.id === s.current ? 'current' : ''} ${i % 2 ? 'low' : 'high'}`,
       onclick: () => {
-        if (locked) { say(['nivel_bloqueado']); b.classList.add('wiggle'); setTimeout(() => b.classList.remove('wiggle'), 500); return; }
         app.update((st) => { st.current = L.id; });
         app.go('play');
       },
     },
       h('span', { class: 'node-num' }, String(L.id)),
       h('span', { class: 'node-ex' }, L.example),
-      locked ? icon('lock', 26) : done ? icon('star', 28) : null,
+      done ? icon('star', 28) : null,
     );
     path.append(b);
   });

@@ -10,7 +10,7 @@ const plan = (op: Op, top: number, bottom: number, carry = false) => {
   return countPlan(step, op, 'larger');
 };
 const labels = (el: HTMLElement, cls = '') => [...el.querySelectorAll(`.flabel.on${cls}`)].map((l) => Number(l.textContent));
-const up = (el: HTMLElement) => el.querySelectorAll('.finger:not(.f-down)').length;
+const up = (el: HTMLElement) => [...el.querySelectorAll<SVGSVGElement>('svg.hands')].map((s) => s.dataset.fingers!).join('').replace(/d/g, '').length;
 const playAll = () => vi.advanceTimersByTime(START_MS + 20 * STEP_MS);
 
 beforeEach(() => vi.useFakeTimers());
