@@ -73,6 +73,18 @@ describe('counting hands', () => {
     expect(f.el.querySelector('.finger-result')!.textContent).toContain('0 dedos');
   });
 
+  it('without numbers she counts herself: no numbers and no answer until the next hint', () => {
+    const f = createFingerHint(plan('+', 6, 3), { numbers: false });
+    expect(f.el.classList.contains('no-numbers')).toBe(true);
+    playAll();
+    expect(f.el.querySelector('.finger-result')!.textContent).toBe('');
+    f.showNumbers();
+    expect(f.el.classList.contains('no-numbers')).toBe(false);
+    playAll();
+    expect(labels(f.el)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(f.el.querySelector('.finger-result')!.textContent).toContain('9');
+  });
+
   it('nothing to tap on the hands; "Otra vez" plays it again from the start', () => {
     const f = createFingerHint(plan('+', 6, 3));
     expect(f.el.querySelector('.hands-pairs button')).toBeNull();

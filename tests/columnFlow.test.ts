@@ -9,8 +9,8 @@ function fakePad() {
     clear() { this.value = ''; }, set(v: string) { this.value = v; }, glow(d: string | null) { this.glows.push(d); }, enable(on: boolean) { this.enabled = on; } };
 }
 function fakeBoard() {
-  return { el: document.createElement('div'), marks: [] as BorrowMark[], carries: [] as number[],
-    setActive() {}, async applyMarks(m: BorrowMark[]) { this.marks.push(...m); }, async setCarry(p: number) { this.carries.push(p); },
+  return { el: document.createElement('div'), marks: [] as BorrowMark[], carries: [] as number[], columns: false,
+    setActive() {}, showColumns() { this.columns = true; }, async applyMarks(m: BorrowMark[]) { this.marks.push(...m); }, async setCarry(p: number) { this.carries.push(p); },
     hasCarry: () => false, writeAnswer() {}, pointAt() {}, wiggle() {}, flash() {}, onTap() {} };
 }
 
@@ -18,7 +18,7 @@ function makeCtx(p: Problem) {
   const ctx = {
     p, steps: solve(p), board: fakeBoard() as any, pad: fakePad() as any, input: new Input(),
     helperArea: document.createElement('div'), addStart: 'larger' as const,
-    carryPlaced: new Set<number>(), marksShown: new Set<number>(), petReact() {},
+    carryPlaced: new Set<number>(), marksShown: new Set<number>(), columnsShown: false, petReact() {},
   } satisfies PlayCtx;
   return ctx;
 }
@@ -31,6 +31,8 @@ const sub = (top: number, bottom: number, level = 9): Problem => ({ op: '-', top
 const single = (p: Problem) => ({ ...p, single: true });
 const btn = (ctx: Ctx) => ctx.helperArea.querySelector<HTMLButtonElement>('.help-btn')!;
 const note = (ctx: Ctx) => ctx.helperArea.querySelector('.flow-note')?.textContent ?? '';
+const hands = (ctx: Ctx) => ctx.helperArea.querySelector('.finger-hint');
+const helps = async (ctx: Ctx, n: number) => { for (let i = 0; i < n; i++) { help(ctx); await tick(); } };
 
 describe('runColumn', () => {
   it('ignores a stale double ✓ from the previous column', async () => {
@@ -68,23 +70,44 @@ describe('runColumn', () => {
     await run.catch(() => {});
   });
 
-  it('borrow column: Pista 1 counts (and says why it is 12), Pista 2 crosses out', async () => {
+  it('borrow column: columns, then hands, then their numbers, then the crossing out', async () => {
     const ctx = makeCtx(sub(32, 5));
     const run = runColumn(ctx, ctx.steps[0]);
     await tick();
-    help(ctx);
-    await tick();
+    expect(ctx.board.columns).toBe(false);
+    await helps(ctx, 1);
+    expect(ctx.board.columns).toBe(true);
+    expect(note(ctx)).toContain('unidades');
+    expect(hands(ctx)).toBeNull();
+    expect(btn(ctx).textContent).toContain('Otra pista');
+    await helps(ctx, 1);
     expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Empieza con 5 dedos');
+    expect(hands(ctx)!.classList.contains('no-numbers')).toBe(true);
     expect(note(ctx)).toContain('el 2 se convierte en 12');
     expect(ctx.board.marks).toEqual([]);
-    expect(btn(ctx).textContent).toContain('Otra pista');
-    help(ctx);
-    await tick();
+    await helps(ctx, 1);
+    expect(hands(ctx)!.classList.contains('no-numbers')).toBe(false);
+    expect(ctx.board.marks).toEqual([]);
+    await helps(ctx, 1);
     expect(ctx.board.marks.map((m: BorrowMark) => m.after)).toEqual([2, 12]);
     expect(btn(ctx).hidden).toBe(true);
     check(ctx, '7');
     const out = await run;
     expect(out.scored.borrow).toBeUndefined();
+  });
+
+  it('the columns are shown once per sum: the next column starts with the hands', async () => {
+    const ctx = makeCtx(add(23, 14));
+    const units = runColumn(ctx, ctx.steps[0]);
+    await helps(ctx, 1);
+    expect(ctx.board.columns).toBe(true);
+    check(ctx, '7');
+    await units;
+    const tens = runColumn(ctx, ctx.steps[1]);
+    await helps(ctx, 1);
+    expect(hands(ctx)).not.toBeNull();
+    check(ctx, '3');
+    await tens;
   });
 
   it('each wrong answer opens the next hint', async () => {
@@ -94,8 +117,14 @@ describe('runColumn', () => {
     check(ctx, '3');
     await tick();
     expect(note(ctx)).toContain('Casi');
-    expect(ctx.helperArea.querySelector('.finger-hint')).not.toBeNull();
+    expect(ctx.board.columns).toBe(true);
     check(ctx, '4');
+    await tick();
+    expect(hands(ctx)).not.toBeNull();
+    check(ctx, '5');
+    await tick();
+    expect(hands(ctx)!.classList.contains('no-numbers')).toBe(false);
+    check(ctx, '6');
     await tick();
     expect(ctx.board.marks.length).toBeGreaterThan(0);
     check(ctx, '7');
@@ -124,12 +153,9 @@ describe('runColumn', () => {
     check(ctx, '7');
     await units;
     const tens = runColumn(ctx, ctx.steps[1]);
-    await tick();
-    help(ctx);
-    await tick();
+    await helps(ctx, 2);
     expect(note(ctx)).toContain('Ahora es 2');
-    help(ctx);
-    await tick();
+    await helps(ctx, 1);
     expect(ctx.board.marks.map((m: BorrowMark) => m.after)).toEqual([2, 12]);
     check(ctx, '2');
     await tens;
@@ -154,13 +180,13 @@ describe('runColumn', () => {
     expect(ctx.carryPlaced.has(1)).toBe(true);
   });
 
-  it('carry column: Pista 2 writes the carried 1', async () => {
+  it('carry column: the last hint writes the carried 1', async () => {
     const ctx = makeCtx(add(27, 15));
     const run = runColumn(ctx, ctx.steps[0]);
     await tick();
-    help(ctx);
-    help(ctx);
-    await tick();
+    await helps(ctx, 3);
+    expect(ctx.board.carries).toEqual([]);
+    await helps(ctx, 1);
     expect(note(ctx)).toContain('escribe el 2 y me llevo 1');
     expect(ctx.board.carries).toEqual([1]);
     check(ctx, '2');
@@ -174,12 +200,9 @@ describe('runColumn', () => {
     check(ctx, '2');
     await units;
     const tens = runColumn(ctx, ctx.steps[1]);
-    await tick();
-    help(ctx);
-    await tick();
+    await helps(ctx, 2);
     expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Sube 2 más');
-    help(ctx);
-    await tick();
+    await helps(ctx, 2);
     expect(ctx.board.carries).toEqual([1]);
     check(ctx, '4');
     const out = await tens;
@@ -203,21 +226,24 @@ describe('runColumn', () => {
     const ctx = makeCtx(add(30, 25));
     const run = runColumn(ctx, ctx.steps[0]);
     await tick();
-    help(ctx);
-    await tick();
+    await helps(ctx, 2);
     expect(ctx.helperArea.textContent).toContain('se queda igual');
+    expect(btn(ctx).hidden).toBe(true);
     expect(ctx.helperArea.querySelector('.finger-hint')).toBeNull();
     check(ctx, '5');
     expect((await run).scored.fingerAdd).toBeUndefined();
   });
 
-  it('single column: one hint only, then the button goes', async () => {
+  it('single column: no columns hint; the hands, then their numbers, then the button goes', async () => {
     const ctx = makeCtx(single(sub(9, 4, 2)));
     const run = runColumn(ctx, solve(ctx.p)[0]);
     await tick();
-    help(ctx);
-    await tick();
-    expect(ctx.helperArea.querySelector('.finger-hint')).not.toBeNull();
+    await helps(ctx, 1);
+    expect(ctx.board.columns).toBe(false);
+    expect(hands(ctx)!.classList.contains('no-numbers')).toBe(true);
+    expect(btn(ctx).hidden).toBe(false);
+    await helps(ctx, 1);
+    expect(hands(ctx)!.classList.contains('no-numbers')).toBe(false);
     expect(btn(ctx).hidden).toBe(true);
     check(ctx, '5');
     expect((await run).scored.fingerSub).toBeUndefined();

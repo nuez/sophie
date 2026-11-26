@@ -3,7 +3,7 @@ import type { ColumnStep, Problem } from '../math/types';
 import { displayMarks } from '../math/columns';
 import { countPlan } from '../math/counting';
 import type { SkillId } from '../progress/skills';
-import { createFingerHint } from './fingerHint';
+import { createFingerHint, type FingerHint } from './fingerHint';
 import { acceptedEntries, type ColumnOutcome } from './scoring';
 import type { Board } from './board';
 import type { Pad } from './pad';
@@ -21,13 +21,19 @@ export interface PlayCtx {
   carryPlaced: Set<number>;
   /** Columns whose borrow (crossing out) is written on the board. */
   marksShown: Set<number>;
+  /** The columns are coloured and named (Pista 1, once per sum). */
+  columnsShown: boolean;
   petReact(ok: boolean): void;
 }
 
+type HintKind = 'columns' | 'fingers' | 'numbers' | 'marks';
+const HINT_ORDER: HintKind[] = ['columns', 'fingers', 'numbers', 'marks'];
+
 /**
- * One column (design 2026-11-25, rev. 2). She fills it in herself: nothing is crossed out
- * and no carry is written for her. 💡 Pista 1 is the counting hands; Pista 2 writes the
- * crossing out or the carried 1. A wrong answer opens the next hint by itself.
+ * One column (design 2026-11-25, rev. 4). She fills it in herself on a plain sum: no coloured
+ * columns, nothing crossed out, no carry written. Each 💡 gives the next hint that applies:
+ * the coloured columns with U/D/C (once per sum), the counting hands, the numbers on the
+ * fingers, then the crossing out or the carried 1. A wrong answer opens the next hint by itself.
  */
 export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnOutcome> {
   const { p, board, pad, input, helperArea } = ctx;
@@ -56,7 +62,14 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
   const carryInMissing = () => !isSub && multi && step.carryIn === 1 && !ctx.carryPlaced.has(place);
   const carryOutMissing = () => !isSub && multi && step.carryOut === 1 && !ctx.carryPlaced.has(place + 1);
   const hasMarksHint = () => (isSub && multi ? pendingBorrows().length > 0 : carryInMissing() || carryOutMissing());
-  const maxHint = () => (hasMarksHint() ? 2 : 1);
+  const applies = (k: HintKind) =>
+    k === 'columns' ? multi && !ctx.columnsShown
+      : k === 'fingers' ? true
+        : k === 'numbers' ? !trivial
+          : hasMarksHint();
+  const given = new Set<HintKind>();
+  const upcoming = () => HINT_ORDER.find((k) => !given.has(k) && applies(k));
+  let fingerHint: FingerHint | null = null;
 
   let hints = 0;
   const hintBtn = h('button', { class: 'help-btn', onclick: () => input.push({ type: 'help' }) }, '💡 Pista');
@@ -64,7 +77,7 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
   helperArea.append(hintBtn, hintBox);
   const refreshBtn = () => {
     hintBtn.textContent = hints === 0 ? '💡 Pista' : '💡 Otra pista';
-    hintBtn.hidden = hints >= maxHint();
+    hintBtn.hidden = !upcoming();
   };
 
   const showBorrows = async (animate: boolean) => {
@@ -74,7 +87,13 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
     }
   };
 
-  const hint1 = () => {
+  const showColumns = () => {
+    ctx.columnsShown = true;
+    board.showColumns();
+    showNote(ctx, `Cada número va en su columna. Ahora estás en ${PLACE_NAME[place]}.`);
+  };
+
+  const fingers = () => {
     if (isSub && multi && step.top !== step.topDigit && pendingBorrows().length > 0) {
       // the count uses what is really on top now; say why, so the hint makes sense
       const why = step.borrow
@@ -88,10 +107,16 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
       hintBox.replaceChildren(h('div', { class: 'helper-text big' }, txt));
       return;
     }
-    hintBox.replaceChildren(createFingerHint(countPlan(step, p.op, ctx.addStart)).el);
+    fingerHint = createFingerHint(countPlan(step, p.op, ctx.addStart), { numbers: false });
+    hintBox.replaceChildren(fingerHint.el);
   };
 
-  const hint2 = async () => {
+  const numbers = () => {
+    // the hands are already there (Pista "fingers" always comes first): show their numbers
+    (fingerHint as FingerHint | null)?.showNumbers();
+  };
+
+  const marks = async () => {
     if (isSub) {
       showNote(ctx, 'Mira arriba: así se tacha.');
       await showBorrows(true);
@@ -110,10 +135,14 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
   };
 
   const nextHint = async () => {
-    if (hints >= maxHint()) return;
+    const k = upcoming();
+    if (!k) return;
     hints++;
-    if (hints === 1) hint1();
-    else await hint2();
+    given.add(k);
+    if (k === 'columns') showColumns();
+    else if (k === 'fingers') fingers();
+    else if (k === 'numbers') numbers();
+    else await marks();
     refreshBtn();
   };
   refreshBtn();
@@ -179,6 +208,7 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
 }
 
 const CASI = '¡Casi! Prueba otra vez.';
+const PLACE_NAME = ['las unidades (U)', 'las decenas (D)', 'las centenas (C)', 'las unidades de mil (UM)', 'las decenas de mil (DM)'];
 
 /** Skills a column practises, scored only when she answered on her own the first time. */
 function score(scored: ColumnOutcome['scored'], step: ColumnStep, isSub: boolean, multi: boolean, trivial: boolean, r: 'right' | 'wrong') {

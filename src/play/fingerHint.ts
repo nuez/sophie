@@ -5,6 +5,8 @@ import type { CountPlan } from '../math/counting';
 export interface FingerHint {
   el: HTMLElement;
   readonly done: boolean;
+  /** The next hint: numbers over the fingers, and the count plays again with them. */
+  showNumbers(): void;
 }
 
 const dedos = (n: number) => (n === 1 ? '1 dedo' : `${n} dedos`);
@@ -25,13 +27,14 @@ export const STEP_MS = 850;
  * Addition: the last number is the answer. Subtraction (always counting up, 9 − 4: from 4 to 9):
  * the fingers that rose are the answer. Past 10 a second pair of hands carries on (11–20).
  */
-export function createFingerHint(plan: CountPlan): FingerHint {
+export function createFingerHint(plan: CountPlan, opts: { numbers?: boolean } = {}): FingerHint {
+  let numbers = opts.numbers ?? true;
   const pairs: HandPair[] = Array.from({ length: plan.end > 10 ? 2 : 1 }, handPair);
   const text = h('div', { class: 'finger-text' }, fingerText(plan));
   if (plan.carryFinger) text.append(h('span', { class: 'carry-note' }, ' (1 es la que me llevo)'));
   const result = h('div', { class: 'finger-result' });
   const again = h('button', { class: 'finger-again', onclick: () => play() }, '↻ Otra vez');
-  const el = h('div', { class: 'finger-hint' },
+  const el = h('div', { class: `finger-hint ${numbers ? '' : 'no-numbers'}` },
     text,
     h('div', { class: `hands-pairs ${pairs.length > 1 ? 'two-pairs' : ''}` }, ...pairs.map((p) => p.svg)),
     h('div', { class: 'finger-end' }, result, again),
@@ -54,7 +57,8 @@ export function createFingerHint(plan: CountPlan): FingerHint {
     }
     const done = isDone();
     again.hidden = !done || plan.fingers === 0;
-    if (!done) result.replaceChildren();
+    // without the numbers she counts the fingers herself: the result would give the answer away
+    if (!done || !numbers) result.replaceChildren();
     else if (plan.kind === 'add') result.replaceChildren(h('span', {}, '¡Has llegado al ', h('b', {}, String(plan.end)), '!'));
     else if (plan.fingers === 0) result.replaceChildren(`Ya estás en el ${plan.end}: has subido 0 dedos.`);
     else result.replaceChildren(h('span', {}, 'Has llegado al ', String(plan.end), '. Has subido ', h('b', {}, dedos(plan.fingers)), '.'));
@@ -74,5 +78,13 @@ export function createFingerHint(plan: CountPlan): FingerHint {
   }
   play();
 
-  return { el, get done() { return isDone(); } };
+  return {
+    el,
+    get done() { return isDone(); },
+    showNumbers() {
+      numbers = true;
+      el.classList.remove('no-numbers');
+      play();
+    },
+  };
 }

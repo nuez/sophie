@@ -169,6 +169,12 @@ button[disabled] { opacity: .45; }
 .col-c { background: var(--col-c); --ci: var(--col-c-ink); }
 .col-um { background: var(--col-um); --ci: var(--col-um-ink); }
 .cell.label { color: var(--ci); }
+/* plain sum: no coloured columns and no U/D/C until Pista 1 */
+.board.plain .cell:not(.op) { background: transparent; --ci: #a39a93; }
+.board.plain .cell.label { visibility: hidden; }
+.board.plain .cell.dim::before { background: transparent; }
+.board.plain .board-grid { background: #fff; border-radius: 18px; }
+.board-grid .cell:not(.op) { transition: background-color .5s; }
 .cell.dim { color: #b3aaa3; }
 .cell.dim::before { content: ''; position: absolute; inset: 0; background: rgba(253,246,233,.6); pointer-events: none; }
 .cell > span { position: relative; z-index: 1; }
@@ -312,6 +318,7 @@ button[disabled] { opacity: .45; }
 .flabel { opacity: 0; transition: opacity .25s; }
 .flabel.on.l-new, .flabel.on.l-carry { transition-delay: .3s; }
 .flabel.on { opacity: 1; }
+.finger-hint.no-numbers .flabel { display: none; }
 .flabel circle { fill: #fff; stroke: #d8cbbd; stroke-width: 2; }
 .flabel text { font-size: 18px; font-weight: 700; fill: var(--ink-soft); }
 .flabel.two text { font-size: 15px; letter-spacing: -.5px; }
@@ -391,3 +398,16 @@ button[disabled] { opacity: .45; }
   .finger-hint { --hands-h: min(24vh, 230px); --two-k: .8; }
   .hands-pairs.two-pairs { flex-direction: row; }
 }
+
+/* drag and drop: coins onto the counter, things onto the pet's room */
+.drag-free { touch-action: none; }
+.drag-scroll { touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.drag-ghost { position: fixed; left: 0; top: 0; z-index: 100; pointer-events: none; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 8px 10px rgba(58,53,51,.25)); }
+.drag-ghost > svg, .drag-ghost > .thumb { width: 100%; height: 100%; }
+.drag-source { opacity: .45; }
+.pay-tray { transition: box-shadow .15s, background-color .15s; }
+.pay-tray.drop-here, .shop-preview.drop-here { box-shadow: 0 0 0 5px var(--good), var(--shadow); background-color: #f1f8ee; }
+.shop-preview { transition: box-shadow .15s; }
+.shop-preview .room-pet { pointer-events: none; }
+.room-thing.movable { cursor: grab; }
+.room-thing.movable .thing-art { width: 100%; height: auto; display: block; }

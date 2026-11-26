@@ -74,6 +74,7 @@ export const playScreen: Screen = (root, app) => {
       addStart: s.settings.addStart,
       carryPlaced: new Set(),
       marksShown: new Set(),
+      columnsShown: false,
       petReact,
     };
     input.flush();

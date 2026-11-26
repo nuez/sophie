@@ -1,4 +1,5 @@
 import { h } from '../ui/dom';
+import { makeDraggable, isOver } from '../ui/drag';
 import { itemThumb } from '../art/items';
 import { coinSvg, coinLabel } from '../art/coins';
 import { PAY_COINS, canAddCoin, centsMissing, changeCoins, formatEuros } from '../money/money';
@@ -31,11 +32,24 @@ export function payFlow(item: Item, balance: number): PayFlow {
     body,
   );
 
-  const coinBtn = (c: number) => h('button', {
-    class: 'pay-coin', 'aria-label': `Poner ${coinLabel(c)}`,
-    disabled: !canAddCoin(total(), c, item.price, balance),
-    onclick: () => { given.push(c); render(); },
-  }, coinSvg(c, 84));
+  let tray: HTMLElement | null = null;
+  // tap a coin, or drag it onto the counter
+  const coinBtn = (c: number) => {
+    const b = h('button', {
+      class: 'pay-coin', 'aria-label': `Poner ${coinLabel(c)}`,
+      disabled: !canAddCoin(total(), c, item.price, balance),
+      onclick: () => { given.push(c); render(); },
+    }, coinSvg(c, 84));
+    makeDraggable(b, {
+      ghost: () => coinSvg(c, 84),
+      onMove: (x, y) => tray?.classList.toggle('drop-here', isOver(tray, x, y)),
+      onDrop: (x, y) => {
+        tray?.classList.remove('drop-here');
+        if (isOver(tray, x, y) && canAddCoin(total(), c, item.price, balance)) { given.push(c); render(); }
+      },
+    });
+    return b;
+  };
 
   function render() {
     const t = total();
@@ -43,14 +57,14 @@ export function payFlow(item: Item, balance: number): PayFlow {
     const enough = t >= item.price;
     body.replaceChildren(
       h('p', { class: 'pay-purse' }, 'En tu monedero tienes ', h('b', {}, formatEuros(balance - t)), '.'),
-      h('p', { class: 'pay-question' }, enough ? '¡Ya llega!' : '¿Con qué monedas pagas? Toca una moneda.'),
+      h('p', { class: 'pay-question' }, enough ? '¡Ya llega!' : '¿Con qué monedas pagas? Arrástralas o tócalas.'),
       h('div', { class: 'pay-coins' },
         ...PAY_COINS.map(coinBtn),
         missing ? h('button', { class: 'pay-small', onclick: () => { given.push(...changeCoins(missing)); render(); } },
           h('span', { class: 'coin-row' }, ...changeCoins(missing).map((c) => coinSvg(c, 44))), 'Los céntimos que faltan') : null,
       ),
-      h('div', { class: 'pay-tray' },
-        h('span', { class: 'pay-label' }, 'Has puesto:'),
+      tray = h('div', { class: 'pay-tray' },
+        h('span', { class: 'pay-label' }, given.length ? 'Has puesto:' : 'Pon aquí las monedas:'),
         h('span', { class: 'coin-row' }, ...given.map((c, i) => h('button', {
           class: 'tray-coin', 'aria-label': `Quitar ${coinLabel(c)}`, onclick: () => { given.splice(i, 1); render(); },
         }, coinSvg(c, 52)))),

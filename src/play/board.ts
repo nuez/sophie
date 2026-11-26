@@ -22,6 +22,8 @@ interface PlaceView {
 export interface Board {
   el: HTMLElement;
   setActive(place: number | null): void;
+  /** Pista 1: colour the columns and name them (U, D, C). The sum starts as plain digits. */
+  showColumns(): void;
   applyMarks(marks: BorrowMark[], animate: boolean, between?: (m: BorrowMark, i: number) => Promise<void>): Promise<void>;
   setCarry(place: number, animate: boolean): Promise<void>;
   hasCarry(place: number): boolean;
@@ -35,7 +37,7 @@ export interface Board {
 /** The sum written in columns, school-style (spec §5, §7, §8). */
 export function createBoard(p: Problem, steps: ColumnStep[]): Board {
   let tapCb: (place: number, row: 'top' | 'carry') => void = () => {};
-  const el = h('div', { class: `board ${p.single ? 'single' : ''}` });
+  const el = h('div', { class: `board ${p.single ? 'single' : 'plain'}` });
 
   if (p.single) return singleBoard(p, el, (cb) => { tapCb = cb; }, () => tapCb);
 
@@ -90,6 +92,7 @@ export function createBoard(p: Problem, steps: ColumnStep[]): Board {
 
   return {
     el,
+    showColumns() { el.classList.remove('plain'); },
     setActive(place) {
       views.forEach((v, i) => {
         const on = i === place;
@@ -160,6 +163,7 @@ function singleBoard(p: Problem, el: HTMLElement, setCb: (cb: any) => void, _get
   return {
     el,
     setActive() {},
+    showColumns() {},
     async applyMarks() {},
     async setCarry() {},
     hasCarry: () => false,

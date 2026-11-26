@@ -9,6 +9,8 @@ export interface PetInfo {
   name: string;
   gender: Gender;
   equipped: string[];
+  /** Where she put the bed, toy and rug in the room (% of the room), by slot. */
+  placed?: Record<string, { left: number; bottom: number }>;
 }
 
 export interface Settings {
