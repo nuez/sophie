@@ -81,7 +81,7 @@ describe('runColumn', () => {
     expect(hands(ctx)).toBeNull();
     expect(btn(ctx).textContent).toContain('Otra pista');
     await helps(ctx, 1);
-    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Empieza con 5 dedos');
+    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Di 5 en voz alta');
     expect(hands(ctx)!.classList.contains('no-numbers')).toBe(true);
     expect(note(ctx)).toContain('el 2 se convierte en 12');
     expect(ctx.board.marks).toEqual([]);
@@ -201,7 +201,7 @@ describe('runColumn', () => {
     await units;
     const tens = runColumn(ctx, ctx.steps[1]);
     await helps(ctx, 2);
-    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Sube 2 más');
+    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('sube 2 dedos');
     await helps(ctx, 2);
     expect(ctx.board.carries).toEqual([1]);
     check(ctx, '4');
