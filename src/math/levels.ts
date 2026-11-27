@@ -34,7 +34,7 @@ const SPECS: Spec[] = [
     pick: (r) => [rint(r, 2, 9), rint(r, 1, 8)], ok: (a, b) => b >= 1 && b < a && a <= 9, fallback: [9, 4] },
   { id: 3, name: 'Sumas que pasan de diez', example: '8 + 7', op: '+', single: true,
     pick: (r) => [rint(r, 2, 9), rint(r, 2, 9)], ok: (a, b) => a + b >= 10, fallback: [8, 7] },
-  { id: 4, name: 'Restas contando hacia arriba', example: '¹2 − 5', op: '-', single: true,
+  { id: 4, name: 'Restas contando hacia arriba', example: '12 − 5', op: '-', single: true,
     pick: (r) => [rint(r, 11, 18), rint(r, 2, 9)], ok: (a, b) => a >= 11 && a <= 18 && b >= 2 && b <= 9 && a - 10 < b, fallback: [12, 5] },
   { id: 5, name: 'Sumas de dos cifras', example: '23 + 14', op: '+',
     pick: (r) => [rint(r, 10, 88), rint(r, 10, 88)], ok: (a, b, s) => len(a) === 2 && len(b) === 2 && !carries(s), fallback: [23, 14] },

@@ -199,7 +199,6 @@ button[disabled] { opacity: .45; }
 .single-wrap .sign { margin-right: 24px; }
 .single-wrap .sline { align-self: stretch; border-top: 5px solid var(--ink); margin: 4px 0; }
 .single-wrap .answer { min-width: calc(var(--digit) * 1.4); justify-content: flex-end; border: 4px dashed var(--col-u-ink); border-radius: 12px; padding: 0 10px; }
-.single-wrap .ten { color: var(--col-d-ink); font-size: .5em; }
 
 /* helper */
 .helper { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; }

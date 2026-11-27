@@ -155,8 +155,8 @@ export function createBoard(p: Problem, steps: ColumnStep[]): Board {
 
 function singleBoard(p: Problem, el: HTMLElement, setCb: (cb: any) => void, _get: () => any): Board {
   const topEl = h('div', { class: 'srow top' });
-  if (p.top >= 10) topEl.append(h('span', { class: 'ten' }, String(Math.floor(p.top / 10))), String(p.top % 10));
-  else topEl.append(String(p.top));
+  // 15 is simply fifteen: written whole, never like a borrowed 1 over a 5
+  topEl.append(String(p.top));
   const bottomEl = h('div', { class: 'srow bottom' }, h('span', { class: 'sign' }, p.op === '+' ? '+' : '−'), String(p.bottom));
   const answerEl = h('div', { class: 'srow answer' });
   el.append(h('div', { class: 'single-wrap' }, topEl, bottomEl, h('div', { class: 'sline' }), answerEl));
