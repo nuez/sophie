@@ -31,7 +31,7 @@ const sub = (top: number, bottom: number, level = 9): Problem => ({ op: '-', top
 const single = (p: Problem) => ({ ...p, single: true });
 const btn = (ctx: Ctx) => ctx.helperArea.querySelector<HTMLButtonElement>('.help-btn')!;
 const note = (ctx: Ctx) => ctx.helperArea.querySelector('.flow-note')?.textContent ?? '';
-const hands = (ctx: Ctx) => ctx.helperArea.querySelector('.finger-hint');
+const hands = (ctx: Ctx) => ctx.helperArea.querySelector('.count-hint');
 const helps = async (ctx: Ctx, n: number) => { for (let i = 0; i < n; i++) { help(ctx); await tick(); } };
 
 describe('runColumn', () => {
@@ -81,7 +81,7 @@ describe('runColumn', () => {
     expect(hands(ctx)).toBeNull();
     expect(btn(ctx).textContent).toContain('Otra pista');
     await helps(ctx, 1);
-    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('Di 5 en voz alta');
+    expect(ctx.helperArea.querySelector('.count-text')!.textContent).toContain('Tienes 5. ¿Cuántos faltan para llegar a 12?');
     expect(hands(ctx)!.classList.contains('no-numbers')).toBe(true);
     expect(note(ctx)).toContain('el 2 se convierte en 12');
     expect(ctx.board.marks).toEqual([]);
@@ -193,7 +193,7 @@ describe('runColumn', () => {
     await run;
   });
 
-  it('receiving column: the hands count the carry; Pista 2 writes it above', async () => {
+  it('receiving column: the dots count the carry; Pista 2 writes it above', async () => {
     const ctx = makeCtx(add(27, 15));
     const units = runColumn(ctx, ctx.steps[0]);
     await tick();
@@ -201,7 +201,7 @@ describe('runColumn', () => {
     await units;
     const tens = runColumn(ctx, ctx.steps[1]);
     await helps(ctx, 2);
-    expect(ctx.helperArea.querySelector('.finger-text')!.textContent).toContain('sube 2 dedos');
+    expect(ctx.helperArea.querySelector('.count-text')!.textContent).toContain('Tienes 2. Pon 2 más');
     await helps(ctx, 2);
     expect(ctx.board.carries).toEqual([1]);
     check(ctx, '4');
@@ -229,7 +229,7 @@ describe('runColumn', () => {
     await helps(ctx, 2);
     expect(ctx.helperArea.textContent).toContain('se queda igual');
     expect(btn(ctx).hidden).toBe(true);
-    expect(ctx.helperArea.querySelector('.finger-hint')).toBeNull();
+    expect(ctx.helperArea.querySelector('.count-hint')).toBeNull();
     check(ctx, '5');
     expect((await run).scored.fingerAdd).toBeUndefined();
   });

@@ -3,7 +3,7 @@ import type { ColumnStep, Problem } from '../math/types';
 import { displayMarks } from '../math/columns';
 import { countPlan } from '../math/counting';
 import type { SkillId } from '../progress/skills';
-import { createFingerHint, type FingerHint } from './fingerHint';
+import { createTenFrameHint, type CountHint } from './tenFrame';
 import { acceptedEntries, type ColumnOutcome } from './scoring';
 import type { Board } from './board';
 import type { Pad } from './pad';
@@ -26,14 +26,14 @@ export interface PlayCtx {
   petReact(ok: boolean): void;
 }
 
-type HintKind = 'columns' | 'fingers' | 'numbers' | 'marks';
-const HINT_ORDER: HintKind[] = ['columns', 'fingers', 'numbers', 'marks'];
+type HintKind = 'columns' | 'count' | 'numbers' | 'marks';
+const HINT_ORDER: HintKind[] = ['columns', 'count', 'numbers', 'marks'];
 
 /**
  * One column (design 2026-11-25, rev. 4). She fills it in herself on a plain sum: no coloured
  * columns, nothing crossed out, no carry written. Each 💡 gives the next hint that applies:
- * the coloured columns with U/D/C (once per sum), the counting hands, the numbers on the
- * fingers, then the crossing out or the carried 1. A wrong answer opens the next hint by itself.
+ * the coloured columns with U/D/C (once per sum), the marcos de 10 (complete the 10), their
+ * numbers, then the crossing out or the carried 1. A wrong answer opens the next hint by itself.
  */
 export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnOutcome> {
   const { p, board, pad, input, helperArea } = ctx;
@@ -64,12 +64,12 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
   const hasMarksHint = () => (isSub && multi ? pendingBorrows().length > 0 : carryInMissing() || carryOutMissing());
   const applies = (k: HintKind) =>
     k === 'columns' ? multi && !ctx.columnsShown
-      : k === 'fingers' ? true
+      : k === 'count' ? true
         : k === 'numbers' ? !trivial
           : hasMarksHint();
   const given = new Set<HintKind>();
   const upcoming = () => HINT_ORDER.find((k) => !given.has(k) && applies(k));
-  let fingerHint: FingerHint | null = null;
+  let countHint: CountHint | null = null;
 
   let hints = 0;
   const hintBtn = h('button', { class: 'help-btn', onclick: () => input.push({ type: 'help' }) }, '💡 Pista');
@@ -93,7 +93,7 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
     showNote(ctx, `Cada número va en su columna. Ahora estás en ${PLACE_NAME[place]}.`);
   };
 
-  const fingers = () => {
+  const count = () => {
     if (isSub && multi && step.top !== step.topDigit && pendingBorrows().length > 0) {
       // the count uses what is really on top now; say why, so the hint makes sense
       const why = step.borrow
@@ -107,13 +107,13 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
       hintBox.replaceChildren(h('div', { class: 'helper-text big' }, txt));
       return;
     }
-    fingerHint = createFingerHint(countPlan(step, p.op, ctx.addStart), { numbers: false });
-    hintBox.replaceChildren(fingerHint.el);
+    countHint = createTenFrameHint(countPlan(step, p.op, ctx.addStart), { numbers: false });
+    hintBox.replaceChildren(countHint.el);
   };
 
   const numbers = () => {
-    // the hands are already there (Pista "fingers" always comes first): show their numbers
-    (fingerHint as FingerHint | null)?.showNumbers();
+    // the dots are already there (the "count" hint always comes first): show the numbers
+    (countHint as CountHint | null)?.showNumbers();
   };
 
   const marks = async () => {
@@ -140,7 +140,7 @@ export async function runColumn(ctx: PlayCtx, step: ColumnStep): Promise<ColumnO
     hints++;
     given.add(k);
     if (k === 'columns') showColumns();
-    else if (k === 'fingers') fingers();
+    else if (k === 'count') count();
     else if (k === 'numbers') numbers();
     else await marks();
     refreshBtn();
